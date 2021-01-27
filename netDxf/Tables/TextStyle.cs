@@ -60,7 +60,7 @@ namespace netDxf.Tables
         /// </summary>
         public static TextStyle Default
         {
-            get { return new TextStyle(DefaultName, "simplex.shx"); }
+            get { return new TextStyle(DefaultName, "simplex.shx") { Height = 0.2 }; }
         }
 
         #endregion

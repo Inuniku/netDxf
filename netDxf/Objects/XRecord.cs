@@ -24,12 +24,11 @@ using System.Collections.Generic;
 
 namespace netDxf.Objects
 {
-    internal sealed class XRecord
+    internal sealed class XRecord : DxfObject
     {
         #region private fields
 
         private DictionaryCloningFlags flags;
-        private string handle;
         private string ownerHandle;
         private readonly string codename;
         private readonly List<XRecordEntry> entries;
@@ -38,10 +37,8 @@ namespace netDxf.Objects
 
         #region constructor
 
-        public XRecord()
+        public XRecord() : base(DxfObjectCode.XRecord)
         {
-            this.codename = DxfObjectCode.XRecord;
-            this.handle = string.Empty;
             this.ownerHandle = string.Empty;
             this.flags = DictionaryCloningFlags.KeepExisting;
             this.entries = new List<XRecordEntry>();
@@ -50,12 +47,6 @@ namespace netDxf.Objects
         #endregion
 
         #region public properties
-
-        public string Handle
-        {
-            get { return this.handle; }
-            set { this.handle = value; }
-        }
 
         public string OwnerHandle
         {

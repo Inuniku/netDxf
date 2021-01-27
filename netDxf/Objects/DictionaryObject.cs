@@ -24,7 +24,7 @@ using System.Collections.Generic;
 
 namespace netDxf.Objects
 {
-    internal class DictionaryObject :
+    public class DictionaryObject :
         DxfObject
     {
         #region private fields

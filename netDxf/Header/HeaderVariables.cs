@@ -35,8 +35,8 @@ namespace netDxf.Header
     {
         #region private fields
 
-        private readonly Dictionary<string, HeaderVariable> variables;
-        private readonly Dictionary<string, HeaderVariable> customVariables;
+        private readonly SortedDictionary<string, HeaderVariable> variables;
+        private readonly SortedDictionary<string, HeaderVariable> customVariables;
 
         #endregion
 
@@ -48,7 +48,7 @@ namespace netDxf.Header
         /// <remarks>The default values are the same ones that are apply to a new AutoCad drawing.</remarks>
         public HeaderVariables()
         {
-            this.variables = new Dictionary<string, HeaderVariable>(StringComparer.OrdinalIgnoreCase)
+            this.variables = new SortedDictionary<string, HeaderVariable>(StringComparer.OrdinalIgnoreCase)
             {
                 {HeaderVariableCode.AcadVer, new HeaderVariable(HeaderVariableCode.AcadVer, 1, DxfVersion.AutoCad2000)},
                 {HeaderVariableCode.DwgCodePage, new HeaderVariable(HeaderVariableCode.DwgCodePage, 3, "ANSI_" + Encoding.ASCII.WindowsCodePage)},
@@ -92,7 +92,7 @@ namespace netDxf.Header
                 {HeaderVariableCode.UcsYDir, new HeaderVariable(HeaderVariableCode.UcsYDir, 30, Vector3.UnitY)}
             };
 
-            this.customVariables = new Dictionary<string, HeaderVariable>(StringComparer.OrdinalIgnoreCase);
+            this.customVariables = new SortedDictionary<string, HeaderVariable>(StringComparer.OrdinalIgnoreCase);
         }
 
         #endregion

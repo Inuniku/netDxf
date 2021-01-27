@@ -710,6 +710,8 @@ namespace netDxf
             get { return this.Layouts[this.activeLayout].AssociatedBlock.Entities.OfType<Wipeout>(); }
         }
 
+        internal Dictionary<string, DocumentDictionary> ExtensionDictionaries { get; set; } = new Dictionary<string, DocumentDictionary>();
+
         #endregion
 
         #endregion

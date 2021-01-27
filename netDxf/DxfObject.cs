@@ -21,6 +21,7 @@
 #endregion
 
 using netDxf.Collections;
+using netDxf.Objects;
 using netDxf.Tables;
 
 namespace netDxf
@@ -58,6 +59,7 @@ namespace netDxf
         private string codename;
         private string handle;
         private DxfObject owner;
+        private DocumentDictionary extensionDictionary;
         private readonly XDataDictionary xData;
 
         #endregion
@@ -74,6 +76,7 @@ namespace netDxf
             this.handle = null;
             this.owner = null;
             this.xData = new XDataDictionary();
+            this.extensionDictionary = null;
             this.xData.AddAppReg += this.XData_AddAppReg;
             this.xData.RemoveAppReg += this.XData_RemoveAppReg;
         }
@@ -121,6 +124,52 @@ namespace netDxf
             get { return this.xData; }
         }
 
+        /// <summary>
+        /// Gets the entity <see cref="DictionaryObject">extended data</see>.
+        /// </summary>
+        public DocumentDictionary ExtensionDictionary
+        {
+            get { return this.extensionDictionary; }
+            internal set { this.extensionDictionary = value; }
+        }
+
+        public DocumentDictionary CreateExtensionDictionary()
+        {
+            if(ExtensionDictionary == null)
+            {
+                this.extensionDictionary = new DocumentDictionary(true, DictionaryCloningFlags.KeepExisting);
+                this.extensionDictionary.Owner = this;
+                this.extensionDictionary.OwnerHandle = this.Handle;
+
+                if (Document != null)
+                {
+                    Document.ExtensionDictionaries.Add(ExtensionDictionary.Handle, ExtensionDictionary);
+                }
+            }
+
+            return ExtensionDictionary;
+        }
+
+        public void DeleteExtensionDictionary()
+        {
+            if (ExtensionDictionary != null)
+            {
+                this.extensionDictionary = null;
+            }
+        }
+        public DxfDocument Document
+        {
+            get
+            {
+                DxfObject ancestor = Owner;
+                while (!(ancestor is DxfDocument) && ancestor != null)
+                {
+                    ancestor = ancestor.owner;
+                }
+
+                return ancestor as DxfDocument;
+            }
+        }
         #endregion
 
         #region internal methods

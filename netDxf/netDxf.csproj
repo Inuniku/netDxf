@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
@@ -10,7 +10,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>netDxf</RootNamespace>
     <AssemblyName>netDxf</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
@@ -83,6 +83,62 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Blocks\BlockAttributeDefinitionChangeEventArgs.cs" />
+    <Compile Include="Blocks\Dynamic\BlockConnectable.cs" />
+    <Compile Include="Blocks\Dynamic\BlockEvaluationContext.cs" />
+    <Compile Include="Blocks\Dynamic\Attributes\ConnectablePropertyAttribute.cs" />
+    <Compile Include="Blocks\Dynamic\ConnectableVectorType.cs" />
+    <Compile Include="Blocks\Dynamic\EvalStep.cs" />
+    <Compile Include="Blocks\Dynamic\FlipState.cs" />
+    <Compile Include="Blocks\Dynamic\IO\XRecordValueReader.cs" />
+    <Compile Include="Blocks\Dynamic\IO\XRecordValueWriter.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\BlkParamPropertyDescriptor.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLookUpGrip.cs" />
+    <Compile Include="Blocks\Dynamic\Block2PtParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockAction.cs" />
+    <Compile Include="Blocks\Dynamic\BlockFlipParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockFlipGrip.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLinearParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLookUpParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockMoveAction.cs" />
+    <Compile Include="Blocks\Dynamic\BlockPointParameter.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\DataType.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\FlipProperty.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\VisibilityProperty.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\PointProperty.cs" />
+    <Compile Include="Blocks\Dynamic\Attributes\ParameterWrapperAttribute.cs" />
+    <Compile Include="Blocks\Dynamic\Property\ExtensionMethods.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\LinearProperty.cs" />
+    <Compile Include="Blocks\Dynamic\Property\PropertyFactory.cs" />
+    <Compile Include="Blocks\Dynamic\Property\UnitsType.cs" />
+    <Compile Include="Blocks\Dynamic\SortentsTable.cs" />
+    <Compile Include="Blocks\Dynamic\Property\BlockParamValueSet.cs" />
+    <Compile Include="Blocks\Dynamic\BlockRepresentationData.cs" />
+    <Compile Include="Blocks\Dynamic\BlockGrip.cs" />
+    <Compile Include="Blocks\Dynamic\BlockGripExpr.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLinearGrip.cs" />
+    <Compile Include="Blocks\Dynamic\BlockFlipAction.cs" />
+    <Compile Include="Blocks\Dynamic\BlockStretchAction.cs" />
+    <Compile Include="Blocks\Dynamic\BlockVisibilityGrip.cs" />
+    <Compile Include="Blocks\Dynamic\Attributes\AcadClassNameAttribute.cs" />
+    <Compile Include="Blocks\Dynamic\Block1PtParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockElement.cs" />
+    <Compile Include="Blocks\Dynamic\BlockParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockXYParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockVisibilityParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockXYGrip.cs" />
+    <Compile Include="Blocks\Dynamic\Registry\DxfClassRegistry.cs" />
+    <Compile Include="Blocks\Dynamic\DbObject.cs" />
+    <Compile Include="Blocks\Dynamic\DynamicBlockProxyNode.cs" />
+    <Compile Include="Blocks\Dynamic\DynamicBlockPurgePreventer.cs" />
+    <Compile Include="Blocks\Dynamic\EvalExpr.cs" />
+    <Compile Include="Blocks\Dynamic\EvalGraph.cs" />
+    <Compile Include="Blocks\Dynamic\IReferencedObjects.cs" />
+    <Compile Include="Blocks\Dynamic\ParamValueSetType.cs" />
+    <Compile Include="Blocks\Dynamic\Property\DynamicBlockReferenceProperty.cs" />
+    <Compile Include="Blocks\Dynamic\Property\DynamicBlockReferencePropertyCollection.cs" />
+    <Compile Include="Blocks\Dynamic\Util\GeometryUtils.cs" />
+    <Compile Include="Blocks\Dynamic\Util\ReaderAdapter.cs" />
+    <Compile Include="Blocks\Dynamic\Util\SerializationUtil.cs" />
     <Compile Include="Collections\DimensionStyleOverrideDictionaryEventArgs.cs" />
     <Compile Include="Collections\DimensionStyleOverrideDictionary.cs" />
     <Compile Include="Collections\ObservableCollection.cs">
@@ -103,6 +159,7 @@
     <Compile Include="Entities\Shape.cs" />
     <Compile Include="IO\DxfVersionNotSupportedException.cs" />
     <Compile Include="Collections\LayerStateManager.cs" />
+    <Compile Include="Objects\DocumentDictionary.cs" />
     <Compile Include="Objects\LayerPropertiesRestoreFlags.cs" />
     <Compile Include="Objects\LayerPropertiesFlags.cs" />
     <Compile Include="Objects\LayerState.cs" />
@@ -364,7 +421,17 @@
   <ItemGroup>
     <None Include="netDxf.snk" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Blocks\Dynamic\BlockBasepointParameter.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Blocks\Dynamic\Structs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>
+    </PreBuildEvent>
+  </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

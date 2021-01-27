@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using netDxf.Blocks;
+using netDxf.Blocks.Dynamic;
 using netDxf.Collections;
 using netDxf.Entities;
 using netDxf.Header;
@@ -252,6 +253,7 @@ namespace netDxf.IO
                 this.WriteImageDefRectorClass(this.doc.Images.Count());
                 this.WriteImageClass(this.doc.Images.Count());
             }
+            DxfClassRegistry.WriteClasses(chunk, doc);
             this.EndSection();
 
             //TABLES SECTION
@@ -423,7 +425,7 @@ namespace netDxf.IO
                 this.WriteUnderlayDefinition(underlayDef, pdfDefinitionDictionary.Handle);
             }
 
-            this.WriteRasterVariables(this.doc.RasterVariables, imageDefDictionary.Handle);
+            this.WriteRasterVariables(this.doc.RasterVariables, namedObjectDictionary.Handle);
             foreach (ImageDefinition imageDef in this.doc.ImageDefinitions.Items)
             {
                 foreach (ImageDefinitionReactor reactor in imageDef.Reactors.Values)
@@ -436,6 +438,35 @@ namespace netDxf.IO
             foreach (LayerState layerState in this.doc.Layers.StateManager.Items)
             {
                 this.WriteLayerState(layerState, layerStates.Handle);
+            }
+
+            foreach(var dicEntry in doc.ExtensionDictionaries) 
+            {
+                // Direct owned resources (not in any table (other than the dictionaries))
+                dicEntry.Value.DXFOutLocal(chunk);
+                WriteXData(dicEntry.Value.XData);
+
+                var references = dicEntry.Value.GetHardReferences();
+
+                foreach (var reference in references)
+                {
+                    if(reference is XRecord xRecord)
+                    {
+                        WriteXRecord(xRecord);
+                    }
+                    else
+                    if (reference is DbObject obj)
+                    {
+                        obj.DXFOutLocal(chunk);
+                        WriteXData(obj.XData);
+                        //WriteXRecord(xRecord);
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException("");
+                    }
+
+                }
             }
 
             this.EndSection(); //End section objects
@@ -1462,6 +1493,7 @@ namespace netDxf.IO
 
             this.chunk.Write(0, blockRecord.CodeName);
             this.chunk.Write(5, blockRecord.Handle);
+            WriteExtensionDictionary(blockRecord.ExtensionDictionary);
             this.chunk.Write(330, blockRecord.Owner.Handle);
 
             this.chunk.Write(100, SubclassMarker.TableRecord);
@@ -1474,10 +1506,10 @@ namespace netDxf.IO
             this.chunk.Write(340, blockRecord.Layout == null ? "0" : blockRecord.Layout.Handle);
 
             // internal blocks do not need more information
-            if (blockRecord.IsForInternalUseOnly)
+            /*if (blockRecord.IsForInternalUseOnly)
             {
                 return;
-            }
+            }*/
 
             // The next three values will only work for DXF version AutoCad2007 and upwards
             this.chunk.Write(70, (short) blockRecord.Units);
@@ -2033,7 +2065,7 @@ namespace netDxf.IO
                 }
                 this.chunk.Write(102, "}");
             }
-
+            WriteExtensionDictionary(entity.ExtensionDictionary);
             this.chunk.Write(330, entity.Owner.Record.Handle);
 
             this.chunk.Write(100, SubclassMarker.Entity);
@@ -2063,6 +2095,15 @@ namespace netDxf.IO
             this.chunk.Write(60, entity.IsVisible ? (short) 0 : (short) 1);
         }
 
+        private void WriteExtensionDictionary(DocumentDictionary extensionDictionary)
+        {
+            if (extensionDictionary != null)
+            {
+                chunk.Write(102, "{ACAD_XDICTIONARY");
+                chunk.Write(360, extensionDictionary.Handle);
+                chunk.Write(102, "}");
+            };
+        }
         private void WriteWipeout(Wipeout wipeout)
         {
             this.chunk.Write(100, SubclassMarker.Wipeout);
@@ -5136,6 +5177,61 @@ namespace netDxf.IO
             //    m => "\\U+" + string.Format("{0:X4}", Convert.ToInt32(m.Groups["char"].Value[0])));
         }
 
+        private void WriteXRecord(XRecord x)
+        {
+            this.chunk.Write(0, x.CodeName);
+            this.chunk.Write(5, x.Handle);
+            /*
+            if (xRecord.Reactors.Count > 0)
+            {
+                this.chunk.Write(102, "{ACAD_REACTORS");
+                foreach (DxfObject o in entity.Reactors)
+                {
+                    Debug.Assert(!string.IsNullOrEmpty(o.Handle), "The handle cannot be null or empty.");
+                    this.chunk.Write(330, o.Handle);
+                }
+                this.chunk.Write(102, "}");
+            }*/
+            this.chunk.Write(330, x.Owner.Handle);
+            this.chunk.Write(100, SubclassMarker.XRecord);
+            this.chunk.Write(280, (short)x.Flags);
+            foreach(var entry in x.Entries)
+                this.chunk.Write((short)entry.Code, entry.Value);
+
+        }
+
+        private void WriteXDataRecord(XDataRecord x)
+        {
+            short code = (short)x.Code;
+            object value = x.Value;
+            if (code == 1000 || code == 1003)
+            {
+                this.chunk.Write(code, this.EncodeNonAsciiCharacters((string)value));
+            }
+            else if (code == 1004) // binary extended data is written in chunks of 127 bytes
+            {
+                byte[] bytes = (byte[])value;
+                byte[] data;
+                int count = bytes.Length;
+                int index = 0;
+                while (count > 127)
+                {
+                    data = new byte[127];
+                    Array.Copy(bytes, index, data, 0, 127);
+                    this.chunk.Write(code, data);
+                    count -= 127;
+                    index += 127;
+                }
+                data = new byte[bytes.Length - index];
+                Array.Copy(bytes, index, data, 0, bytes.Length - index);
+                this.chunk.Write(code, data);
+            }
+            else
+            {
+                this.chunk.Write(code, value);
+            }
+        }
+
         private void WriteXData(XDataDictionary xData)
         {
             foreach (string appReg in xData.AppIds)
@@ -5144,34 +5240,7 @@ namespace netDxf.IO
 
                 foreach (XDataRecord x in xData[appReg].XDataRecord)
                 {
-                    short code = (short) x.Code;
-                    object value = x.Value;
-                    if (code == 1000 || code == 1003)
-                    {
-                        this.chunk.Write(code, this.EncodeNonAsciiCharacters((string) value));
-                    }
-                    else if (code == 1004) // binary extended data is written in chunks of 127 bytes
-                    {
-                        byte[] bytes = (byte[]) value;
-                        byte[] data;
-                        int count = bytes.Length;
-                        int index = 0;
-                        while (count > 127)
-                        {
-                            data = new byte[127];
-                            Array.Copy(bytes, index, data, 0, 127);
-                            this.chunk.Write(code, data);
-                            count -= 127;
-                            index += 127;
-                        }
-                        data = new byte[bytes.Length - index];
-                        Array.Copy(bytes, index, data, 0, bytes.Length - index);
-                        this.chunk.Write(code, data);
-                    }
-                    else
-                    {
-                        this.chunk.Write(code, value);
-                    }
+                    WriteXDataRecord(x);
                 }
             }
         }

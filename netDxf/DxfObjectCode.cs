@@ -491,5 +491,52 @@ namespace netDxf
         /// Layouts.
         /// </summary>
         public const string Layout = "LAYOUT";
+
+
+
+
+        public const string EvaluationGraph = "ACAD_EVALUATION_GRAPH";
+
+        public const string BlockGripLocationComponent = "BLOCKGRIPLOCATIONCOMPONENT";
+        public const string DynamicBlockProxyNode = "ACDB_DYNAMICBLOCKPROXYNODE";
+
+
+        public const string BlockVisibilityParameter = "BLOCKVISIBILITYPARAMETER";
+
+        public const string BlockFlipParameter = "BLOCKFLIPPARAMETER";
+
+        public const string BlockLinearParameter = "BLOCKLINEARPARAMETER";
+
+        public const string BlockLookupParameter = "BLOCKLOOKUPPARAMETER";
+
+        public const string BlockXYParameter = "BLOCKXYPARAMETER";
+
+        public const string BlockBasePointParameter = "BLOCKBASEPOINTPARAMETER";
+
+        public const string BlockPointParameter = "BLOCKPOINTPARAMETER";
+
+        public const string BlockVisibilityGrip = "BLOCKVISIBILITYGRIP";
+
+        public const string BlockFlipGrip = "BLOCKFLIPGRIP";
+
+        public const string BlockLinearGrip = "BLOCKLINEARGRIP";
+
+        public const string BlockLookupGrip = "BLOCKLOOKUPGRIP";
+
+        public const string BlockXYGrip = "BLOCKXYGRIP";
+
+        public const string BlockFlipAction = "BLOCKFLIPACTION";
+
+        public const string BlockStretchAction = "BLOCKSTRETCHACTION";
+
+        public const string BlockMoveAction = "BLOCKMOVEACTION";
+
+        public const string BlockRepresentationData = "ACDB_BLOCKREPRESENTATION_DATA";
+
+        public const string DynamicBlockPurgePreventer = "ACDB_DYNAMICBLOCKPURGEPREVENTER_VERSION";
+
+        public const string SortentsTable = "SORTENTSTABLE";
+        //public const string BlockGripLocationComponent = "BLOCKXYGRIP";
+
     }
 }
