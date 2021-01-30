@@ -19,6 +19,9 @@ namespace netDxf.Blocks.Dynamic
         public BlockPointParameter(string codename) : base(codename)
         {}
 
+
+
+
         internal override void DXFOutLocal(ICodeValueWriter writer)
         {
             base.DXFOutLocal(writer);

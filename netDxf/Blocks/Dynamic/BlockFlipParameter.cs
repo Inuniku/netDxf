@@ -36,18 +36,9 @@ namespace netDxf.Blocks.Dynamic
             if (!base.Eval(step, context))
                 return false;
 
-            if (step == EvalStep.Initialize || step == EvalStep.Abort)
-            {
-                UpdatedState = State;
-                return true;
-            }
-
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
                 UpdatedState = (FlipState)FlipConnection.Evaluate(context);
-
-                Debug.WriteLine("I FlIP AUS!2");
-
                 return true;
             }
 
@@ -100,13 +91,13 @@ namespace netDxf.Blocks.Dynamic
             ReaderAdapter reader2 = new ReaderAdapter(reader);
 
             base.RuntimeDataIn(reader);
-            UpdatedState = (FlipState)reader2.ReadNow<short>(70);
+            State = UpdatedState = (FlipState)reader2.ReadNow<short>(70);
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)
         {
             base.RuntimeDataOut(writer);
-            writer.Write(70, (short)UpdatedState);
+            writer.Write(70, (short)State);
         }
     }
 }

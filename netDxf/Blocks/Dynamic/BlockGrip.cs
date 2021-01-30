@@ -17,16 +17,19 @@ namespace netDxf.Blocks.Dynamic
             GripXConnection.Connection = "Value";
             GripYConnection.Connection = "Value";
         }
+
         public BlockConnection GripXConnection { get; } = new BlockConnection();
         public BlockConnection GripYConnection { get; } = new BlockConnection();
-        public Vector3 DefinitionPoint { get; set; }
 
+        public Vector3 DefinitionPoint { get; set; }
+       
         [ConnectableProperty("", ConnectableVectorType.XY)]
+        public Vector3 Location { get; set; }
         public Vector3 UpdatedLocation { get; set; }
         [ConnectableProperty("Displacement", ConnectableVectorType.XY)]
         public Vector3 LocationDelta { 
-            get => UpdatedLocation - DefinitionPoint;
-            set => UpdatedLocation = DefinitionPoint + value; 
+            get => UpdatedLocation - Location;
+            set => UpdatedLocation = Location + value; 
         }
 
         public bool Cycling { get; set; }
@@ -37,12 +40,20 @@ namespace netDxf.Blocks.Dynamic
             if (!base.Eval(step, context))
                 return false;
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Initialize || step == EvalStep.Execute)
             {
-                Vector3 updatedLocation = new Vector3();
-                updatedLocation.X = (double)GripXConnection.Evaluate(context);
-                updatedLocation.Y = (double)GripYConnection.Evaluate(context);
-                UpdatedLocation = updatedLocation;
+                BlockGripExpr xPression = context.EvalGraph.GetNode(GripXConnection.Id) as BlockGripExpr;
+                BlockGripExpr yPression = context.EvalGraph.GetNode(GripYConnection.Id) as BlockGripExpr;
+                Vector3 location = new Vector3();
+                
+                location.X = (double)xPression.GripConnection.Evaluate(context);
+                location.Y = (double)yPression.GripConnection.Evaluate(context);
+                return true;
+            }
+
+            if (step == EvalStep.Commit)
+            { 
+                Location = UpdatedLocation;
                 return true;
             }
 

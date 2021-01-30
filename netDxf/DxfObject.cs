@@ -137,12 +137,13 @@ namespace netDxf
         {
             if(ExtensionDictionary == null)
             {
-                this.extensionDictionary = new DocumentDictionary(true, DictionaryCloningFlags.KeepExisting);
-                this.extensionDictionary.Owner = this;
-                this.extensionDictionary.OwnerHandle = this.Handle;
+                ExtensionDictionary = new DocumentDictionary(true, DictionaryCloningFlags.KeepExisting);
+                ExtensionDictionary.Owner = this;
+                ExtensionDictionary.OwnerHandle = this.Handle;
 
                 if (Document != null)
                 {
+                    Document.NumHandles = ExtensionDictionary.AssignHandle(Document.NumHandles);
                     Document.ExtensionDictionaries.Add(ExtensionDictionary.Handle, ExtensionDictionary);
                 }
             }
@@ -186,6 +187,11 @@ namespace netDxf
         internal virtual long AssignHandle(long entityNumber)
         {
             this.handle = entityNumber.ToString("X");
+         
+            if (ExtensionDictionary != null)
+            {
+                entityNumber = ExtensionDictionary.AssignHandle(entityNumber);
+            }
             return entityNumber + 1;
         }
 

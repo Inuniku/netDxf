@@ -12,12 +12,13 @@ namespace netDxf.Blocks.Dynamic.Property
     {
         new private BlockVisibilityParameter Parameter;
 
-        internal VisibilityProperty(BlockVisibilityParameter property) : base(property)
+        internal VisibilityProperty(BlockVisibilityParameter property, DynamicBlockReferenceContext context) : base(property, context)
         {
             Parameter = property;
         }
+        new public string Value { get => (string)base.Value; set => base.Value = value; }
 
-        public override object Value { get => Parameter.VisibilityState; set => Parameter.VisibilityState = (string)value; }
+        internal override object InternalValue { get => Parameter.VisibilityState; set => Parameter.VisibilityState = (string)value; }
 
         public override UnitsType UnitsType => UnitsType.Distance;
 
@@ -26,5 +27,7 @@ namespace netDxf.Blocks.Dynamic.Property
         public override string PropertyName => Parameter.Label;
 
         public override string Description => Parameter.LabelDesc;
+
+        public override IEnumerable<object> AllowedValues => Parameter.States.Select(s => s.Name);
     }
 }

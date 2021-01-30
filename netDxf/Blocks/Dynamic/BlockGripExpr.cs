@@ -14,8 +14,7 @@ namespace netDxf.Blocks.Dynamic
     public class BlockGripExpr : BlockEvalConnectable
     {
         public BlockGripExpr(string codename) : base(codename) { }
-
-        BlockConnection GripConnection { get; } = new BlockConnection();
+        public BlockConnection GripConnection { get; } = new BlockConnection();
 
         [ConnectableProperty("Value")]
         public object Value { get; set; }
@@ -26,9 +25,9 @@ namespace netDxf.Blocks.Dynamic
                 return false;
 
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
-                Value = GripConnection.Evaluate(context);
+                //Value = GripConnection.Evaluate(context);
                 return true;
             }
 

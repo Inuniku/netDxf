@@ -19,12 +19,15 @@ namespace netDxf.Blocks.Dynamic
     {
         public Block2PtParameter(string codename) : base(codename) { }
         
-        public int BasePoint { get; set; }
+        public int BasePointIndex { get; set; }
+        public Vector3 DefinitionPoint1 { get; set; }
+        public Vector3 DefinitionPoint2 { get; set; }
+        public Vector3 Normal { get => new Vector3(0, 0, -1); }
+
         [ConnectableProperty("Base", ConnectableVectorType.Normal_And_XY)]
         public Vector3 Point1 { get; set; }
         [ConnectableProperty("End", ConnectableVectorType.Normal_And_XY)]
         public Vector3 Point2 { get; set; }
-        public Vector3 Normal { get => new Vector3(0, 0, -1); }
 
         [ConnectableProperty("UpdatedBase", ConnectableVectorType.Normal_And_XY)]
         public Vector3 UpdatedPoint1 { get; set; }
@@ -35,7 +38,7 @@ namespace netDxf.Blocks.Dynamic
         public double Distance
         {
             get => Vector3.Distance(Point1, Point2);
-            set => Point2 = Point1 + Direction * (double)Convert.ChangeType(value, typeof(double));
+            set => DefinitionPoint2 = Point1 + Direction * (double)Convert.ChangeType(value, typeof(double));
         }
 
         [ConnectableProperty("UpdatedDistance", ConnectableVectorType.Normal)]
@@ -48,8 +51,8 @@ namespace netDxf.Blocks.Dynamic
         [ConnectableProperty("UpdatedDistance", ConnectableVectorType.XY)]
         public Vector3 UpdatedDifference
         {
-            get => UpdatedPoint2 - UpdatedPoint1;
-            set => UpdatedPoint2 = UpdatedPoint1 + value;
+            get => UpdatedPoint2 - Point1;
+            set => UpdatedPoint2 = Point1 + value;
         }
 
         [ConnectableProperty("Base", ConnectableVectorType.XY, "Delta")]
@@ -70,7 +73,7 @@ namespace netDxf.Blocks.Dynamic
         public double Angle
         {
             get => Math.Atan2(Direction.Y, Direction.X);
-            set => Point2 = Distance * new Vector3(Math.Cos(value), Math.Sin(value), 0);
+            set => DefinitionPoint2 = Distance * new Vector3(Math.Cos(value), Math.Sin(value), 0);
         }
         [ConnectableProperty("UpdatedAngle", ConnectableVectorType.Normal)]
         public double UpdatedAngle
@@ -79,7 +82,7 @@ namespace netDxf.Blocks.Dynamic
             set => UpdatedPoint2 = UpdatedDistance * new Vector3(Math.Cos(value), Math.Sin(value), 0);
         }
 
-        private Vector3 Direction => (Point2 - Point1).Normalized();
+        private Vector3 Direction => (DefinitionPoint2 - DefinitionPoint1).Normalized();
         private Vector3 UpdatedDirection => (UpdatedPoint2 - UpdatedPoint1).Normalized();
 
         public int Messages1 { get; set; }
@@ -103,34 +106,35 @@ namespace netDxf.Blocks.Dynamic
             if (!base.Eval(step, context))
                 return false;
 
-            if (step == EvalStep.Initialize || step == EvalStep.Abort)
+            if (step == EvalStep.Execute)
             {
-                UpdatedPoint1 = Point1;
-                UpdatedPoint2 = Point2;
-                return true;
-            }
+                for(int i = 0; i < GripNodeIds.Length; i++)
+                {
+                    if(GripNodeIds[i] != 0)
+                    {
+                        BlockGrip grip = context.EvalGraph.GetNode(GripNodeIds[i]) as BlockGrip;
+                        grip.Eval(EvalStep.Initialize, context);
+                    }
+                }
 
-            if (step == EvalStep.Update)
-            {
                 Vector3 updatedpoint1 = UpdatedPoint1;
 
                 if(Connection1.IsValid)
-                    updatedpoint1.X = (double)Connection1.Evaluate(context);
+                    updatedpoint1.X += (double)Connection1.Evaluate(context);
                 if (Connection2.IsValid)
-                    updatedpoint1.Y = (double)Connection2.Evaluate(context);
-                
-                Point1Delta = updatedpoint1;
+                    updatedpoint1.Y += (double)Connection2.Evaluate(context);
+
+                UpdatedPoint1 = updatedpoint1;
 
 
                 Vector3 updatedpoint2 = UpdatedPoint2;
 
                 if (Connection3.IsValid)
-                    updatedpoint2.X = (double)Connection3.Evaluate(context);
+                    updatedpoint2.X += (double)Connection3.Evaluate(context);
                 if (Connection4.IsValid)
-                    updatedpoint2.Y = (double)Connection4.Evaluate(context);
+                    updatedpoint2.Y += (double)Connection4.Evaluate(context);
 
-                Point2Delta = updatedpoint2;
-
+                UpdatedPoint2 = updatedpoint2;
 
                 return true;
             }
@@ -149,8 +153,8 @@ namespace netDxf.Blocks.Dynamic
             base.DXFOutLocal(writer);
             WriteClassBegin(writer, "AcDbBlock2PtParameter");
 
-            writer.WriteVector3(1010, Point1);
-            writer.WriteVector3(1011, Point2);
+            writer.WriteVector3(1010, DefinitionPoint1);
+            writer.WriteVector3(1011, DefinitionPoint2);
             writer.WriteIntList(170, 91, GripNodeIds);
 
             writer.Write(171, (short)Messages1);
@@ -169,7 +173,7 @@ namespace netDxf.Blocks.Dynamic
             writer.WriteDefault(95, Connection4.Id);
             writer.WriteDefault(304, Connection4.Connection);
 
-            writer.Write(177, (short)BasePoint);
+            writer.Write(177, (short)BasePointIndex);
         }
 
         internal override void DXFInLocal(ICodeValueReader reader)
@@ -179,8 +183,8 @@ namespace netDxf.Blocks.Dynamic
             base.DXFInLocal(reader);
             ReadClassBegin(reader, "AcDbBlock2PtParameter");
 
-            reader2.ReadVector3(1010, v =>  Point1 = v);
-            reader2.ReadVector3(1011, v => Point2 = v);
+            reader2.ReadVector3(1010, v =>  DefinitionPoint1 = v);
+            reader2.ReadVector3(1011, v => DefinitionPoint2 = v);
             reader2.ReadList<int>(170, 91, v => GripNodeIds = v.ToArray());
 
             reader2.Read<short>(171, v => Messages1 = v);
@@ -199,9 +203,12 @@ namespace netDxf.Blocks.Dynamic
             reader2.ReadDefault<int>(95, v => Connection4.Id = v);
             reader2.ReadDefault<string>(304, v => Connection4.Connection = v);
 
-            reader2.Read<short>(177, v => BasePoint = v);
+            reader2.Read<short>(177, v => BasePointIndex = v);
 
             reader2.ExecReadUntil(0, 100, 1001);
+
+            UpdatedPoint1 = Point1 = DefinitionPoint1;
+            UpdatedPoint2 = Point2 = DefinitionPoint2;
         }
 
         internal override void RuntimeDataIn(ICodeValueReader reader)
@@ -214,14 +221,17 @@ namespace netDxf.Blocks.Dynamic
             point.X = reader2.ReadNow<double>(10);
             point.Y = reader2.ReadNow<double>(20);
             point.Z = reader2.ReadNow<double>(30);
-            UpdatedPoint1 = point;
+            Point1 = point;
             point.X = reader2.ReadNow<double>(10);
             point.Y = reader2.ReadNow<double>(20);
             point.Z = reader2.ReadNow<double>(30);
-            UpdatedPoint2 = point;
+            Point2 = point;
             point.X = reader2.ReadNow<double>(10);
             point.Y = reader2.ReadNow<double>(20);
             point.Z = reader2.ReadNow<double>(30);
+
+            UpdatedPoint1 = Point1;
+            UpdatedPoint2 = Point2;
             // Normal
         }
 
@@ -229,13 +239,13 @@ namespace netDxf.Blocks.Dynamic
         {
             base.RuntimeDataOut(writer);
 
-            writer.Write(10, UpdatedPoint1.X);
-            writer.Write(20, UpdatedPoint1.Y);
-            writer.Write(30, UpdatedPoint1.Z);
+            writer.Write(10, Point1.X);
+            writer.Write(20, Point1.Y);
+            writer.Write(30, Point1.Z);
 
-            writer.Write(10, UpdatedPoint2.X);
-            writer.Write(20, UpdatedPoint2.Y);
-            writer.Write(30, UpdatedPoint2.Z);
+            writer.Write(10, Point2.X);
+            writer.Write(20, Point2.Y);
+            writer.Write(30, Point2.Z);
 
             writer.Write(10, Normal.X);
             writer.Write(20, Normal.Y);

@@ -145,7 +145,7 @@ namespace netDxf.Blocks.Dynamic
             return nodeEntry;
         }
 
-        internal void Eval(List<int> evalNodes, BlockEvaluationContext context, EvalStep step = EvalStep.Update)
+        internal void Eval(List<int> evalNodes, BlockEvaluationContext context, EvalStep step = EvalStep.Execute)
         {
             // Get all Nodes that could be active (Union of all SubGraphs)
             HashSet<int> toProcessNodes = new HashSet<int>();

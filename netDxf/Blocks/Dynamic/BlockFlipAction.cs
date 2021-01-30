@@ -29,16 +29,32 @@ namespace netDxf.Blocks.Dynamic
                 return true;
             }
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
                 FlipState flip = (FlipState)FlipConnection.Evaluate(context);
-                FlipState updateFlip = (FlipState)FlipConnection.Evaluate(context);
+                FlipState updateFlip = (FlipState)UpdateFlipConnection.Evaluate(context);
 
-                Vector3 basePos = (Vector3)UpdateBaseConnection.Evaluate(context);
-                Vector3 EndPos = (Vector3)UpdateBaseConnection.Evaluate(context);
+                if(flip != updateFlip)
+                {
+                    //TODO Vector2 Only
+                    Vector3 basePos = (Vector3)UpdateBaseConnection.Evaluate(context);
+                    Vector3 endPos = (Vector3)UpdateEndConnection.Evaluate(context);
 
-                Debug.WriteLine("I FlIP AUS!");
+                    //Vector2 basePos2d = new Vector2(basePos.X, basePos.Y);
+                    //Vector2 endPos2d = new Vector2(endPos.X, endPos.Y);
 
+                    //Step 01. Translate to Unit space
+                    Vector3 dirX = (endPos - basePos).Normalized();
+                    Vector3 dirY = Vector3.CrossProduct(Vector3.UnitZ, dirX);
+
+                    Matrix4 toObjectSpace = GeometryUtils.ToObjectSpaceTransform(basePos, dirX, dirY);
+                   // Matrix4 toUnitSpace = GeometryUtils.ToUnitSpaceTransform(basePos, dirX, dirY);
+                    Matrix4 reflect = new Matrix4(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+
+                    Matrix4 flipTransform = toObjectSpace * reflect * toObjectSpace.Inverse();
+                    //Matrix3 flipMatrix = GeometryUtils.FlipMatrix2D(basePos2d, endPos2d, out Vector3 translation);
+                    context.TransformRepresentationBy(Selection, flipTransform);
+                }
                 return true;
             }
 

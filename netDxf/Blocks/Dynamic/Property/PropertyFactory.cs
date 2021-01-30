@@ -9,29 +9,38 @@ namespace netDxf.Blocks.Dynamic.Property
 {
     internal class PropertyFactory
     {
-        internal static IEnumerable<DynamicBlockReferenceProperty> CreatePropertyWrappers(BlockParameter blockParam)
+        internal static IEnumerable<DynamicBlockReferenceProperty> CreatePropertyWrappers(BlockParameter blockParam, DynamicBlockReferenceContext context)
         {
-            if(blockParam is BlockLinearParameter linearParameter)
+            if (blockParam is BlockLinearParameter linearParameter)
             {
-                return new DynamicBlockReferenceProperty[] { new LinearProperty(linearParameter) };
+                return new DynamicBlockReferenceProperty[] { new LinearProperty(linearParameter, context) };
             }
 
             if (blockParam is BlockPointParameter pointParameter)
             {
-                return new DynamicBlockReferenceProperty[] { new PointProperty(pointParameter, 0), new PointProperty(pointParameter, 1) };
+                return new DynamicBlockReferenceProperty[] { new PointProperty(pointParameter, 0, context), new PointProperty(pointParameter, 1, context) };
             }
 
             if (blockParam is BlockFlipParameter flipParameter)
             {
-                return new DynamicBlockReferenceProperty[] { new FlipProperty(flipParameter) };
+                return new DynamicBlockReferenceProperty[] { new FlipProperty(flipParameter, context) };
             }
 
             if (blockParam is BlockVisibilityParameter visibilityParameter)
             {
-                return new DynamicBlockReferenceProperty[] { new VisibilityProperty(visibilityParameter) };
+                return new DynamicBlockReferenceProperty[] { new VisibilityProperty(visibilityParameter, context) };
             }
-            return Enumerable.Empty<DynamicBlockReferenceProperty>();
-            //throw new NotImplementedException();
+
+            if (blockParam is BlockXYParameter xyParameter)
+            {
+                return new DynamicBlockReferenceProperty[] { new XYProperty(xyParameter, 0, context) , new XYProperty(xyParameter, 1, context) };
+            }
+
+            if (blockParam is BlockBasepointParameter)
+            {
+                return Array.Empty<DynamicBlockReferenceProperty>();
+            }
+            throw new NotImplementedException();
         }
     }
 }

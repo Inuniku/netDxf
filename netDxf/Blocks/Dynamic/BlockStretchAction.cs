@@ -1,5 +1,6 @@
 ﻿using netDxf.Blocks.Dynamic.Attributes;
 using netDxf.Blocks.Dynamic.Util;
+using netDxf.Entities;
 using netDxf.IO;
 using System;
 using System.Collections.Generic;
@@ -45,10 +46,12 @@ namespace netDxf.Blocks.Dynamic
                 return true;
             }
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
                 double deltaX = (double)StretchX.Evaluate(context);
                 double deltaY = (double)StretchY.Evaluate(context);
+
+                StretchObjects(new Vector3(deltaX, deltaY,0), context);
 
                 Debug.Write("Stretching" + deltaX + "," +deltaY);
                 return true;
@@ -56,6 +59,39 @@ namespace netDxf.Blocks.Dynamic
             return true;
         }
 
+        private void StretchObjects(Vector3 delta, BlockEvaluationContext contex)
+        {
+            if (delta.X == 0.0 && delta.Y == 0.0 && delta.Z == 0.0)
+            { return; }
+
+            Block dynamicBlock = contex.DynamicBlock;
+            Block repBlock = contex.RepresentationBlock;
+
+            // Move Params
+            /*
+            var graphObjects = contex.EvalGraph.Nodes.Where(n => StretchSelection.Single(s => s.ndle)).Select(n => n.Expression);
+            foreach (var graphObject in graphObjects)
+            {
+                BlockParameter blockParam = (BlockParameter)graphObject;
+            }*/
+
+            // Move Entities
+            Debug.Assert(dynamicBlock.Entities.Count == repBlock.Entities.Count);
+
+            for(int i = 0; i < StretchSelection.Length; i++)
+            {
+                StretchSelection selection = StretchSelection[i];
+                EntityObject originalEntity = Document.GetObjectByHandle(selection.StretchObject) as EntityObject;
+
+                int index = dynamicBlock.Entities.IndexOf(originalEntity);
+                EntityObject entity = repBlock.Entities[index];
+                GeometryUtils.StretchObject(entity, selection.Indices, delta);
+
+            }
+        }
+
+        // TODO: Move to geometry utilities
+     
         internal StretchSelection[] ReadStretchSelection(ICodeValueReader reader)
         {
             Debug.Assert(reader.Code == 73);

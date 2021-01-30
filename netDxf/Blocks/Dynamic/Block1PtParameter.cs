@@ -12,27 +12,32 @@ using System.Threading.Tasks;
 namespace netDxf.Blocks.Dynamic
 {
     [AcadClassName("AcDbBlock1PtParameter")]
-    public abstract class Block1PtParameter : BlockParameter
+    public class Block1PtParameter : BlockParameter
     {
         public Block1PtParameter(string codename) : base(codename) { }
 
+        public Vector3 DefinitionPoint { get; set; }
+
+
         [ConnectableProperty("", ConnectableVectorType.XY)]
-        public Vector3 BasePoint { get; set; }
+        public Vector3 Point { get; set; }
+
 
         [ConnectableProperty("Updated", ConnectableVectorType.XY)]
         public Vector3 UpdatedPoint { get; set; }
 
+
         [ConnectableProperty("", ConnectableVectorType.XY, "Delta")]
         public Vector3 PointDelta
         {
-            get => UpdatedPoint - BasePoint;
-            set => UpdatedPoint = BasePoint + value;
+            get => UpdatedPoint - Point;
+            set => UpdatedPoint = Point + value;
         }
 
         public int Messages { get; set; }
-        public BlockConnection Connection { get; private set; } = new BlockConnection();
+        public BlockConnection UpdatedPointMessageX { get; private set; } = new BlockConnection();
         public int Messages1 { get; set; }
-        public BlockConnection Connection1 { get; private set; } = new BlockConnection();
+        public BlockConnection UpdatedPointMessageY { get; private set; } = new BlockConnection();
         public int GripId { get; set; }
 
         public override bool Eval(EvalStep step, BlockEvaluationContext context)
@@ -40,21 +45,19 @@ namespace netDxf.Blocks.Dynamic
             if (!base.Eval(step, context))
                 return false;
 
-            if (step == EvalStep.Initialize || step == EvalStep.Abort)
+            if (step == EvalStep.Execute)
             {
-                UpdatedPoint = BasePoint;
-                return true;
-            }
+                if(GripId != 0)
+                {
+                    BlockGrip grip = context.EvalGraph.GetNode(GripId) as BlockGrip;
+                    grip.Eval(EvalStep.Execute, context);
+                }
 
-            if (step == EvalStep.Update)
-            {
                 Vector3 updatedpoint = UpdatedPoint;
-
-                if (Connection.IsValid)
-                    updatedpoint.X += (double)Connection.Evaluate(context);
-                if (Connection1.IsValid)
-                    updatedpoint.Y += (double)Connection1.Evaluate(context);
-
+                if (UpdatedPointMessageX.IsValid)
+                    updatedpoint.X += (double)UpdatedPointMessageX.Evaluate(context);
+                if (UpdatedPointMessageY.IsValid)
+                    updatedpoint.Y += (double)UpdatedPointMessageY.Evaluate(context);
                 UpdatedPoint = updatedpoint;
 
                 return true;
@@ -62,7 +65,7 @@ namespace netDxf.Blocks.Dynamic
 
             if (step == EvalStep.Commit)
             {
-                BasePoint = UpdatedPoint;
+                Point = UpdatedPoint;
                 return true;
             }
             return true;
@@ -73,15 +76,15 @@ namespace netDxf.Blocks.Dynamic
             base.DXFOutLocal(writer);
             WriteClassBegin(writer, "AcDbBlock1PtParameter");
 
-            writer.WriteVector3(1010, BasePoint);
+            writer.WriteVector3(1010, DefinitionPoint);
 
             writer.Write(170, (short)Messages);
-            writer.WriteDefault(91, Connection.Id);
-            writer.WriteDefault(301, Connection.Connection);
+            writer.WriteDefault(91, UpdatedPointMessageX.Id);
+            writer.WriteDefault(301, UpdatedPointMessageX.Connection);
 
             writer.Write(171, (short)Messages1);
-            writer.WriteDefault(92, Connection1.Id);
-            writer.WriteDefault(302, Connection1.Connection);
+            writer.WriteDefault(92, UpdatedPointMessageY.Id);
+            writer.WriteDefault(302, UpdatedPointMessageY.Connection);
 
             writer.Write(93, GripId);
         }
@@ -92,18 +95,20 @@ namespace netDxf.Blocks.Dynamic
             ReadClassBegin(reader, "AcDbBlock1PtParameter");
 
             ReaderAdapter reader2 = new ReaderAdapter(reader);
-            reader2.ReadVector3(1010, v => BasePoint = v);
+            reader2.ReadVector3(1010, v => DefinitionPoint = v);
 
             reader2.Read<short>(170, v => Messages = v);
-            reader2.ReadDefault<int>(91, v => Connection.Id = v);
-            reader2.ReadDefault<string>(301, v => Connection.Connection = v);
+            reader2.ReadDefault<int>(91, v => UpdatedPointMessageX.Id = v);
+            reader2.ReadDefault<string>(301, v => UpdatedPointMessageX.Connection = v);
 
             reader2.Read<short>(171, v => Messages1 = v);
-            reader2.ReadDefault<int>(92, v => Connection1.Id = v);
-            reader2.ReadDefault<string>(302, v => Connection1.Connection = v);
+            reader2.ReadDefault<int>(92, v => UpdatedPointMessageY.Id = v);
+            reader2.ReadDefault<string>(302, v => UpdatedPointMessageY.Connection = v);
 
             reader2.Read<int>(93, v => GripId = v);
             reader2.ExecReadUntil(0, 100, 1001);
+
+            UpdatedPoint = Point = DefinitionPoint;
         }
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
@@ -116,16 +121,16 @@ namespace netDxf.Blocks.Dynamic
             currentPoint.Y = reader2.ReadNow<double>(20);
             currentPoint.Z = reader2.ReadNow<double>(30);
 
-            UpdatedPoint = currentPoint;
+            UpdatedPoint = Point = currentPoint;
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)
         {
             base.RuntimeDataOut(writer);
 
-            writer.Write(10, UpdatedPoint.X);
-            writer.Write(20, UpdatedPoint.Y);
-            writer.Write(30, UpdatedPoint.Z);
+            writer.Write(10, Point.X);
+            writer.Write(20, Point.Y);
+            writer.Write(30, Point.Z);
         }
     }
 }

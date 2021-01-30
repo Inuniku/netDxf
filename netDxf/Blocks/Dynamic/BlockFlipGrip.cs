@@ -22,20 +22,26 @@ namespace netDxf.Blocks.Dynamic
         internal FlipState FlipState { get; set; }
 
         public BlockFlipGrip(string codename) : base(codename) { }
-        internal override void RuntimeDataIn(ICodeValueReader reader)
-        {
-            ReaderAdapter reader2 = new ReaderAdapter(reader);
 
-            base.RuntimeDataIn(reader);
-            UpdatedFlipState = (FlipState)reader2.ReadNow<short>(70);
-            FlipState = (FlipState)reader2.ReadNow<short>(70);
-        }
-
-        internal override void RuntimeDataOut(ICodeValueWriter writer)
+        public override bool Eval(EvalStep step, BlockEvaluationContext context)
         {
-            base.RuntimeDataOut(writer);
-            writer.Write(70, (short)UpdatedFlipState);
-            writer.Write(70, (short)FlipState);
+            if (!base.Eval(step, context))
+                return false;
+
+            if (step == EvalStep.Initialize || step == EvalStep.Execute)
+            {
+                BlockGripExpr xPression = context.EvalGraph.GetNode(FlipGripExpressionId) as BlockGripExpr;
+                UpdatedFlipState = (FlipState)xPression.GripConnection.Evaluate(context);
+                return true;
+            }
+
+            if (step == EvalStep.Commit)
+            {
+                UpdatedFlipState = FlipState;
+                return true;
+            }
+
+            return true;
         }
 
         internal override void DXFOutLocal(ICodeValueWriter writer)
@@ -59,5 +65,24 @@ namespace netDxf.Blocks.Dynamic
 
             reader2.ExecReadUntil(0, 100, 1001);
         }
+
+        internal override void RuntimeDataIn(ICodeValueReader reader)
+        {
+            ReaderAdapter reader2 = new ReaderAdapter(reader);
+
+            base.RuntimeDataIn(reader);
+            reader2.ReadNow<short>(70);
+            FlipState = (FlipState)reader2.ReadNow<short>(70);
+
+            UpdatedFlipState = FlipState;
+        }
+
+        internal override void RuntimeDataOut(ICodeValueWriter writer)
+        {
+            base.RuntimeDataOut(writer);
+            writer.Write(70, (short)0);
+            writer.Write(70, (short)FlipState);
+        }
+
     }
 }

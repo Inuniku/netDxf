@@ -16,10 +16,11 @@ namespace netDxf.Blocks.Dynamic
         public BlockRepresentationData(string codename) : base(codename) { }
 
         public int Version { get; set; }
-        private string Id { get; set; }
+        internal string Id { get; set; }
         public BlockRecord BlockRecord
         {
             get => Document.GetObjectByHandle(Id) as BlockRecord;
+            set => Id = value.Handle;
         }
 
         internal override void DXFOutLocal(ICodeValueWriter writer)

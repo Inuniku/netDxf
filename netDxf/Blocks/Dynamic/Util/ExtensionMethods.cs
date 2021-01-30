@@ -12,8 +12,16 @@ namespace netDxf.Blocks.Dynamic.Property
     {
         public static bool IsDynamicBlock(this Insert blockReference)
         {
+            // Might be a dynamic block without representation
             if (blockReference.ExtensionDictionary == null)
-                return false;
+            {
+
+                var dynBlockDict = blockReference.Block.Record.ExtensionDictionary;
+                if (dynBlockDict == null)
+                    return false;
+                if (dynBlockDict.HasKey("ACAD_ENHANCEDBLOCK"))
+                    return true;
+            };
 
             var representationDict = blockReference.ExtensionDictionary["AcDbBlockRepresentation"] as DocumentDictionary;
             if (representationDict == null)
@@ -27,18 +35,14 @@ namespace netDxf.Blocks.Dynamic.Property
             return true;
         }
 
-
-        public static DynamicBlockReferencePropertyCollection GetDynamicBlockReferencePropertyCollection(this Insert blockReference)
+        public static DynamicBlockReferenceContext GetDynamicBlockReferenceContext(this Insert blockReference)
         {
             if(!blockReference.IsDynamicBlock())
             {
                 return null;
             }
 
-
-            return new DynamicBlockReferencePropertyCollection(blockReference);
+            return new DynamicBlockReferenceContext(blockReference);
         }
-
-
     }
 }

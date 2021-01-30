@@ -12,21 +12,24 @@ namespace netDxf.Blocks.Dynamic.Property
         new private BlockPointParameter Parameter;
 
         private Vector3 Point1 => Parameter.UpdatedPoint;
-        internal PointProperty(BlockPointParameter property, int axis) : base(property)
+        internal PointProperty(BlockPointParameter property, int axis, DynamicBlockReferenceContext context) : base(property, context)
         {
             Axis = axis;
             Parameter = property;
         }
-        public override object Value
+
+        new public double Value { get => (double)base.Value; set => base.Value = value; }
+
+        internal override object InternalValue
         {
             get => Axis == 0 ? Point1.X : Point1.Y; 
             set
             {
                 Vector3 currentPoint = Parameter.UpdatedPoint;
                 if (Axis == 0)
-                    currentPoint.X = (double)value;
+                    currentPoint.X = Convert.ToDouble(value);
                 else
-                    currentPoint.Y = (double)Value;
+                    currentPoint.Y = Convert.ToDouble(value);
 
                 Parameter.UpdatedPoint = currentPoint;
             }

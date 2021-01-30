@@ -12,26 +12,35 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    public class VisibilityState
+    public class VisibilityStateSet
     {
         public string Name { get; set; }
-        public string[] Selection1 { get; set; }
-        public string[] Selection2 { get; set; }
+        public string[] EntitySelection { get; set; }
+        public string[] NodeSelection { get; set; }
     }
 
     [AcadClassName("AcDbBlockVisibilityParameter", 135625452, 184556386)]
     public class BlockVisibilityParameter : Block1PtParameter
     {
+        private string visibilityState;
+
         public BlockVisibilityParameter(string codename) : base(codename) { }
         public bool Unk { get; set; }
         public int Unk1 { get; set; }
         public string Label { get; set; }
         public string LabelDesc { get; set; }
         public string[] AllObjects { get; set; }
-        public VisibilityState[] States { get; set; }
+        public VisibilityStateSet[] States { get; set; }
+
+        public string CurrentVisibilityState { get; set; }
 
         [ConnectableProperty("VisibilityState")]
-        public string VisibilityState { get; set; }
+        public string VisibilityState { get => visibilityState; set => visibilityState = value; }
+
+        // TODO: Safe and lazy evaluation
+        internal VisibilityStateSet CurrentVisibilitySet => States.Single(n => n.Name == VisibilityState);
+
+
 
         public override bool Eval(EvalStep step, BlockEvaluationContext context)
         {
@@ -39,8 +48,24 @@ namespace netDxf.Blocks.Dynamic
                 return false;
 
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
+                if(CurrentVisibilityState != VisibilityState)
+                {
+                    VisibilityState = CurrentVisibilityState;
+
+                    for (int i = 0; i < AllObjects.Length; i++)
+                    {
+                        context.SetRepresentationVisibility(AllObjects[i], false);
+                    }
+
+                    var visibleNodes = CurrentVisibilitySet.NodeSelection;
+                    for (int i = 0; i < visibleNodes.Length; i++)
+                    {
+
+                        context.SetRepresentationVisibility(visibleNodes[i], true);
+                    }
+                }
             }
 
             return true;
@@ -51,7 +76,7 @@ namespace netDxf.Blocks.Dynamic
             base.RuntimeDataIn(reader);
             ReaderAdapter reader2 = new ReaderAdapter(reader);
 
-            VisibilityState = reader2.ReadNow<string>(1);
+            CurrentVisibilityState = VisibilityState = reader2.ReadNow<string>(1);
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)
@@ -73,12 +98,12 @@ namespace netDxf.Blocks.Dynamic
             writer.WriteList(93, 331, AllObjects);
 
             writer.Write(92, States.Length);
-            for(int i = 0; i < States.Length; i++)
+            for (int i = 0; i < States.Length; i++)
             {
                 var element = States[i];
                 writer.Write(303, element.Name);
-                writer.WriteList(94, 332, element.Selection1);
-                writer.WriteList(95, 333, element.Selection2);
+                writer.WriteList(94, 332, element.EntitySelection);
+                writer.WriteList(95, 333, element.NodeSelection);
             }
         }
         internal override void DXFInLocal(ICodeValueReader reader)
@@ -120,12 +145,13 @@ namespace netDxf.Blocks.Dynamic
                 }
             }
 
-            BasePoint = basePoint;
+            VisibilityState = States[0].Name;
+            CurrentVisibilityState = VisibilityState;
         }
 
-        private VisibilityState ReadState(ICodeValueReader reader)
+        private VisibilityStateSet ReadState(ICodeValueReader reader)
         {
-            VisibilityState result = new VisibilityState();
+            VisibilityStateSet result = new VisibilityStateSet();
             bool isDone = false;
 
             bool readName = false;
@@ -137,7 +163,7 @@ namespace netDxf.Blocks.Dynamic
                 switch (reader.Code)
                 {
                     case 303:
-                        if(readName)
+                        if (readName)
                         {
                             isDone = true;
                             break;
@@ -152,7 +178,7 @@ namespace netDxf.Blocks.Dynamic
                             isDone = true;
                             break;
                         }
-                        result.Selection1 = ReadAllObjects(reader, 94);
+                        result.EntitySelection = ReadAllObjects(reader, 94);
                         readSel1 = true;
                         break;
                     case 95:
@@ -162,7 +188,7 @@ namespace netDxf.Blocks.Dynamic
                             break;
                         }
                         readSel2 = true;
-                        result.Selection2 = ReadAllObjects(reader, 95);
+                        result.NodeSelection = ReadAllObjects(reader, 95);
                         break;
                     default:
                         isDone = true;
@@ -172,17 +198,17 @@ namespace netDxf.Blocks.Dynamic
             return result;
         }
 
-        private VisibilityState[] ReadStates(ICodeValueReader reader)
+        private VisibilityStateSet[] ReadStates(ICodeValueReader reader)
         {
-            List<VisibilityState> result = new List<VisibilityState>();
+            List<VisibilityStateSet> result = new List<VisibilityStateSet>();
             Debug.Assert(reader.Code == 92);
             int numObjects = reader.ReadInt();
             reader.Next();
-            for(int i = 0; i < numObjects; i++)
+            for (int i = 0; i < numObjects; i++)
             {
-                VisibilityState visibilityState = ReadState(reader);
+                VisibilityStateSet visibilityState = ReadState(reader);
                 result.Add(visibilityState);
-            }    
+            }
             Debug.Assert(numObjects == result.Count);
 
             return result.ToArray();

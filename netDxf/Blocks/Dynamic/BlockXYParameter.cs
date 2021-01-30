@@ -32,14 +32,11 @@ namespace netDxf.Blocks.Dynamic
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
             base.RuntimeDataIn(reader);
-
-           // VisibilityState = reader2.ReadNow<string>(1);
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)
         {
             base.RuntimeDataOut(writer);
-            //writer.Write(1, VisibilityState);
         }
 
         internal override void DXFOutLocal(ICodeValueWriter writer)

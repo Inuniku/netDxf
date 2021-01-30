@@ -10,13 +10,16 @@ namespace netDxf.Blocks.Dynamic.Property
 {
     public class FlipProperty : DynamicBlockReferenceProperty
     {
-        new private BlockFlipParameter Parameter;
+        new internal BlockFlipParameter Parameter;
 
-        internal FlipProperty(BlockFlipParameter property) : base(property)
+        public static readonly FlipState[] AllStates = new FlipState[] { FlipState.NotFlipped, FlipState.Flipped};
+        new public FlipState Value { get => (FlipState)base.Value; set => base.Value = value; }
+
+        internal FlipProperty(BlockFlipParameter property, DynamicBlockReferenceContext context) : base(property, context)
         {
             Parameter = property;
         }
-        public override object Value { get => Parameter.UpdatedState; set => Parameter.UpdatedState = (FlipState)value; }
+        internal override object InternalValue { get => Parameter.UpdatedState; set => Parameter.UpdatedState = (FlipState)value; }
 
         public override UnitsType UnitsType => UnitsType.Distance;
 
@@ -25,5 +28,6 @@ namespace netDxf.Blocks.Dynamic.Property
         public override string PropertyName => Parameter.Label;
 
         public override string Description => Parameter.LabelDesc;
+        public override IEnumerable<object> AllowedValues => Enum.GetValues(typeof(FlipState)).OfType<object>();
     }
 }

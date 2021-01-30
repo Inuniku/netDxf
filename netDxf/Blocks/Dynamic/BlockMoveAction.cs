@@ -14,7 +14,7 @@ namespace netDxf.Blocks.Dynamic
     public class BlockMoveAction : BlockAction
     {
         public BlockMoveAction(string codename) : base(codename)
-        {}
+        { }
         BlockConnection MoveXConnection { get; } = new BlockConnection();
         BlockConnection MoveYConnection { get; } = new BlockConnection();
 
@@ -29,12 +29,16 @@ namespace netDxf.Blocks.Dynamic
                 return false;
 
 
-            if (step == EvalStep.Update)
+            if (step == EvalStep.Execute)
             {
                 double deltaX = (double)MoveXConnection.Evaluate(context);
                 double deltaY = (double)MoveYConnection.Evaluate(context);
+                if (deltaX == 0.0 && deltaY == 0.0)
+                    return true;
 
-                Debug.Write("Moving");
+                context.TransformRepresentationBy(Selection, Matrix3.Identity, new Vector3(deltaX, deltaY, 0));
+                Debug.Write($"Moving {deltaX},{deltaY}\n");
+                return true;
             }
 
             return true;
@@ -46,7 +50,7 @@ namespace netDxf.Blocks.Dynamic
 
             base.RuntimeDataIn(reader);
 
-            CurrentAngleOffset = reader2.ReadNow<double>(40);
+            AngleOffset = CurrentAngleOffset = reader2.ReadNow<double>(40);
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)
@@ -61,10 +65,10 @@ namespace netDxf.Blocks.Dynamic
             base.DXFOutLocal(writer);
             WriteClassBegin(writer, "AcDbBlockMoveAction");
 
-            writer.Write(92,    MoveXConnection.Id);
-            writer.Write(301,   MoveXConnection.Connection);
-            writer.Write(93,    MoveYConnection.Id);
-            writer.Write(302,   MoveYConnection.Connection);
+            writer.Write(92, MoveXConnection.Id);
+            writer.Write(301, MoveXConnection.Connection);
+            writer.Write(93, MoveYConnection.Id);
+            writer.Write(302, MoveYConnection.Connection);
 
             writer.Write(140, DistanceMultiplier);
             writer.Write(141, AngleOffset);

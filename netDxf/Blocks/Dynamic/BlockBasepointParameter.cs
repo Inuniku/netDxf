@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    [AcadClassName("AcDbBlockBasepointParameter")]
+    [AcadClassName("AcDbBlockBasepointParameter", 82437801, 112294725)]
     internal class BlockBasepointParameter : Block1PtParameter
     {
         public Vector3 BasePoint1 { get; set; }
@@ -20,6 +20,22 @@ namespace netDxf.Blocks.Dynamic
 
         public BlockBasepointParameter(string codename) : base(codename)
         {}
+
+        public override bool Eval(EvalStep step, BlockEvaluationContext context)
+        {
+            if (!base.Eval(step, context))
+                return false;
+
+
+            if (step == EvalStep.Execute)
+            {
+
+                Debug.Write($"Moving {PointDelta.X},{PointDelta.Y}\n");
+                return true;
+            }
+
+            return true;
+        }
 
         internal override void DXFOutLocal(ICodeValueWriter writer)
         {
