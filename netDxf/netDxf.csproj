@@ -90,6 +90,8 @@
     <Compile Include="Blocks\Dynamic\DynamicBlockReferenceContext.cs" />
     <Compile Include="Blocks\Dynamic\EvalStep.cs" />
     <Compile Include="Blocks\Dynamic\FlipState.cs" />
+    <Compile Include="Blocks\Dynamic\IO\CopyReaderWriter.cs" />
+    <Compile Include="Blocks\Dynamic\IO\IResolveReader.cs" />
     <Compile Include="Blocks\Dynamic\IO\XRecordValueReader.cs" />
     <Compile Include="Blocks\Dynamic\IO\XRecordValueWriter.cs" />
     <Compile Include="Blocks\Dynamic\BlockLookUpGrip.cs" />
@@ -152,6 +154,7 @@
     <Compile Include="Collections\ShapeStyles.cs" />
     <Compile Include="Collections\SupportFolders.cs" />
     <Compile Include="Entities\EntityChangeEventArgs.cs" />
+    <Compile Include="Entities\Helper\MTextHelper.cs" />
     <Compile Include="Entities\MTextDrawingDirection.cs" />
     <Compile Include="Entities\MTextParagraphAlignment.cs" />
     <Compile Include="Entities\MTextParagraphOptions.cs" />

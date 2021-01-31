@@ -1306,11 +1306,12 @@ namespace netDxf.IO
 
             if (style.TextFillColor != null)
             {
-                this.chunk.Write(69, (short) 2);
+                this.chunk.Write(69, style.TextFillBackground ? (short)1 : (short) 2);
                 this.chunk.Write(70, style.TextFillColor.Index);
             }
             else
             {
+                this.chunk.Write(69, style.TextFillBackground ? (short)1 : (short)2);
                 this.chunk.Write(70, (short) 0);
             }
 
@@ -1748,7 +1749,7 @@ namespace netDxf.IO
 
             this.chunk.Write(40, style.Height);
             this.chunk.Write(41, style.WidthFactor);
-            this.chunk.Write(42, style.Height);
+            this.chunk.Write(42, doc.DrawingVariables.TextSize);
             this.chunk.Write(50, style.ObliqueAngle);
 
             // when a true type font file is present the font information is defined by the file and this information is not needed
@@ -3099,9 +3100,9 @@ namespace netDxf.IO
             this.WriteXData(text.XData);
         }
 
-        private void WriteMText(MText mText)
+        private void WriteMText(MText mText, short headerCode = 100, string headerValue = SubclassMarker.MText)
         {
-            this.chunk.Write(100, SubclassMarker.MText);
+            this.chunk.Write(headerCode, headerValue);
 
             this.chunk.Write(10, mText.Position.X);
             this.chunk.Write(20, mText.Position.Y);
@@ -4460,6 +4461,7 @@ namespace netDxf.IO
             this.chunk.Write(230, def.Normal.Z);
 
             this.chunk.Write(100, SubclassMarker.AttributeDefinition);
+            this.chunk.Write(280, (short)0);
 
             this.chunk.Write(3, this.EncodeNonAsciiCharacters(def.Prompt));
 
@@ -4515,8 +4517,19 @@ namespace netDxf.IO
                     this.chunk.Write(74, (short) 0);
                     break;
             }
+            // TODO: Block Lock
 
-            this.WriteXData(def.XData);
+            if (def.EmbeddedMText != null)
+            {
+                this.chunk.Write(71, (short)4);
+                this.chunk.Write(72, (short)0);
+                this.chunk.Write(11, def.EmbeddedMText.Position.X);
+                this.chunk.Write(21, def.EmbeddedMText.Position.Y);
+                this.chunk.Write(31, def.EmbeddedMText.Position.Z);
+                WriteMText(def.EmbeddedMText, 101, "Embedded Object");
+            }
+            else
+                this.WriteXData(def.XData);
         }
 
         private void WriteAttribute(Attribute attrib)

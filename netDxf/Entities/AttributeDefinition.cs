@@ -483,6 +483,12 @@ namespace netDxf.Entities
             internal set { base.Owner = value; }
         }
 
+        public MText EmbeddedMText
+        {
+            get;
+            internal set;
+        }
+
         #endregion
 
         #region public methods

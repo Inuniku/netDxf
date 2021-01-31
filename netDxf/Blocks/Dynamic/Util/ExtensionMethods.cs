@@ -44,5 +44,10 @@ namespace netDxf.Blocks.Dynamic.Property
 
             return new DynamicBlockReferenceContext(blockReference);
         }
+
+        public static T[] DeepClone<T>(this T[] source) where T : ICloneable
+        {
+            return source.Select(item => (T)item.Clone()).ToArray();
+        }
     }
 }

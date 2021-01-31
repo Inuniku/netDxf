@@ -1,5 +1,6 @@
 ﻿using netDxf.Blocks.Dynamic;
 using netDxf.Blocks.Dynamic.Attributes;
+using netDxf.Blocks.Dynamic.IO;
 using netDxf.Blocks.Dynamic.Util;
 using netDxf.IO;
 using System;
@@ -19,6 +20,14 @@ namespace netDxf.Objects
         bool isHardOwner;
 
         Dictionary<string, DxfObject> _dictionary = new Dictionary<string, DxfObject>();
+
+        public DocumentDictionary(string codename) : base(codename)
+        {
+            IsHardOwner = true;
+            Cloning = DictionaryCloningFlags.KeepExisting;
+        }
+
+
         internal DocumentDictionary(bool issHardOwner = true, DictionaryCloningFlags cloning = DictionaryCloningFlags.KeepExisting) : base(DxfObjectCode.Dictionary)
         {
             IsHardOwner = issHardOwner;
@@ -126,6 +135,31 @@ namespace netDxf.Objects
             return _result;
         }
 
+        internal override void DXFInLocal(ICodeValueReader reader)
+        {
+            base.DXFInLocal(reader);
+            ReadClassBegin(reader, "AcDbDictionary");
+
+            ReaderAdapter reader2 = new ReaderAdapter(reader);
+
+            reader2.Read<short>(280, v => IsHardOwner = v != 0);
+            reader2.Read<short>(281, v => Cloning = (DictionaryCloningFlags) v);
+
+            reader2.WhenCode(3, r =>
+            {
+                while (r.Code == 3)
+                {
+                    string first = r.ReadString();
+                    r.Next(); Debug.Assert(r.Code == 350);
+                    string second = r.ReadString();
+                    r.Next();
+                    var secondObject = ((IResolveReader)r).ResolveHandle(second);
+                    _dictionary.Add(first, secondObject);
+                }
+            });
+
+            reader2.ExecReadUntil(0, 100, 1001);
+        }
         internal override void DXFOutLocal(ICodeValueWriter writer)
         {
             base.DXFOutLocal(writer);

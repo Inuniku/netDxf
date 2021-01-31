@@ -47,6 +47,8 @@ namespace netDxf.Blocks.Dynamic
             RegisterDXFInstance(DxfObjectCode.DynamicBlockPurgePreventer, typeof(DynamicBlockPurgePreventer));
 
 
+            RegisterDXFInstance(DxfObjectCode.SortentsTable, typeof(SortentsTable));
+
 
             XRecordMap = Assembly.GetExecutingAssembly().GetTypes()
                                  .Select(t => new { Type = t, Att = t.GetCustomAttribute<AcadClassNameAttribute>() })

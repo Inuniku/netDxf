@@ -36,10 +36,19 @@ namespace netDxf.Blocks.Dynamic
                 if (deltaX == 0.0 && deltaY == 0.0)
                     return true;
 
-                context.TransformRepresentationBy(Selection, Matrix3.Identity, new Vector3(deltaX, deltaY, 0));
+                Matrix4 actionTransform = Matrix4.RotationZ(-CurrentAngleOffset)
+                                          * Matrix4.Translation(DistanceMultiplier * new Vector3(deltaX, deltaY, 0))
+                                          * Matrix4.RotationZ(CurrentAngleOffset);
+                context.TransformRepresentationBy(Selection, actionTransform);
                 Debug.Write($"Moving {deltaX},{deltaY}\n");
                 return true;
             }
+
+            if (step == EvalStep.Commit)
+            {
+                AngleOffset = CurrentAngleOffset;
+            }
+
 
             return true;
         }

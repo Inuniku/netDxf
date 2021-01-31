@@ -31,6 +31,7 @@ using netDxf.Blocks;
 using netDxf.Blocks.Dynamic;
 using netDxf.Collections;
 using netDxf.Entities;
+using netDxf.Entities.Helper;
 using netDxf.Header;
 using netDxf.Objects;
 using netDxf.Tables;
@@ -2078,6 +2079,7 @@ namespace netDxf.IO
                 // text
                 TextHeight = dimtxt,
                 TextColor = dimclrt,
+                TextFillBackground = dimtfill == 1,
                 TextFillColor = dimtfill == 2 ? dimtfillclrt : null,
                 TextVerticalPlacement = dimtad,
                 TextHorizontalPlacement = dimjust,
@@ -3262,12 +3264,14 @@ namespace netDxf.IO
         {
             string tag = string.Empty;
             string text = string.Empty;
-            string value = string.Empty;
             AttributeFlags flags = AttributeFlags.None;
             List<XData> xData = new List<XData>();
-
+            // TODO: Make MTEXT-Attributes work
+            //MText embeddedMText = null;
+            //short version = 0;
+            //short vericalJustification = 0;
+            bool isMTEXT = false;
             TextInfo textSubClassData =  ReadTextInfo();
-
             this.chunk.Next();
 
             while (this.chunk.Code != 0)
@@ -3275,7 +3279,7 @@ namespace netDxf.IO
                 switch (this.chunk.Code)
                 {
                     case 1:
-                        value = this.DecodeEncodedNonAsciiCharacters(this.chunk.ReadString());
+                        //value = this.DecodeEncodedNonAsciiCharacters(this.chunk.ReadString());
                         this.chunk.Next();
                         break;
                     case 2:
@@ -3290,6 +3294,12 @@ namespace netDxf.IO
                         flags = (AttributeFlags)this.chunk.ReadShort();
                         this.chunk.Next();
                         break;
+                    case 101:
+                        //embeddedMText = ReadMText();
+                        isMTEXT = true;
+                        while (this.chunk.Code != 0 && this.chunk.Code != 1001)
+                            this.chunk.Next();
+                        break;
                     case 1001:
                         string appId = this.DecodeEncodedNonAsciiCharacters(this.chunk.ReadString());
                         XData data = this.ReadXDataRecord(new ApplicationRegistry(appId));
@@ -3301,20 +3311,22 @@ namespace netDxf.IO
                         break;
                 }
             }
+
             AttributeDefinition attDef = new AttributeDefinition(tag)
             {
                 Position = textSubClassData.Position,
                 Normal = textSubClassData.Normal,
                 Alignment = textSubClassData.Alignment,
                 Prompt = text,
-                Value = value,
+                Value = textSubClassData.Value,
                 Flags = flags,
                 Style = textSubClassData.Style,
                 Height = textSubClassData.Height,
-                Width = textSubClassData.Width,
-                WidthFactor = textSubClassData.Style.WidthFactor,
+                Width = textSubClassData.WidthFactor,
+                WidthFactor = textSubClassData.WidthFactor,
                 ObliqueAngle = textSubClassData.ObliqueAngle,
-                Rotation = textSubClassData.Rotation
+                Rotation = textSubClassData.Rotation,
+                EmbeddedMText = null
             };
 
             attDef.XData.AddRange(xData);
@@ -3419,6 +3431,8 @@ namespace netDxf.IO
             string attTag = string.Empty;
             string value = string.Empty;
 
+            bool firstHorizontal = true;
+            bool isMText = true;
             this.chunk.Next();
             while (this.chunk.Code != 0)
             {
@@ -3496,7 +3510,11 @@ namespace netDxf.IO
                         this.chunk.Next();
                         break;
                     case 72:
-                        horizontalAlignment = this.chunk.ReadShort();
+                        if(firstHorizontal)
+                        {
+                            horizontalAlignment = this.chunk.ReadShort();
+                            firstHorizontal = false;
+                        }  
                         this.chunk.Next();
                         break;
                     case 74:
@@ -3514,6 +3532,13 @@ namespace netDxf.IO
                     case 230:
                         normal.Z = this.chunk.ReadDouble();
                         this.chunk.Next();
+                        break;
+                    case 101:
+                        // Case of MTEXT
+                        isMText = true;
+                        //embeddedMText = ReadMText();
+                        while (this.chunk.Code != 0 && this.chunk.Code != 1001)
+                            this.chunk.Next();
                         break;
                     case 1001:
                         string appId = this.DecodeEncodedNonAsciiCharacters(this.chunk.ReadString());
@@ -3551,6 +3576,12 @@ namespace netDxf.IO
             {
                 return null;
             }
+            /*
+            if(isMText)
+            {
+                value = MTextHelper.MTextToPlainText(value).Replace;
+            }*/
+
 
             Attribute attribute = new Attribute(attTag)
             {
@@ -11053,6 +11084,7 @@ namespace netDxf.IO
                     if (element == null)
                         continue;
                     docDict.AddHardReference(entry.Value, element);
+                    doc.AddedObjects.Add(entry.Key, element);
                 }
                 return docDict;
             }
@@ -11064,6 +11096,7 @@ namespace netDxf.IO
                     var element = ResolveHardReference(subHandle);
                     resolvedObjects.Add(element);
                     element.Owner = subObj;
+                    doc.AddedObjects.Add(subHandle, element);
                 }
                 subObj.SetHardHandles(resolvedObjects);
 

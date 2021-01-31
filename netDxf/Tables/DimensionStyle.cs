@@ -117,6 +117,7 @@ namespace netDxf.Tables
         // text
         private TextStyle dimtxsty;
         private AciColor dimclrt;
+        private int dimtfill; //(dimtfill == 1 -> Transparent BG)
         private AciColor dimtfillclr;
         private double dimtxt;
         private DimensionStyleTextHorizontalPlacement dimjust;
@@ -267,6 +268,7 @@ namespace netDxf.Tables
             // text
             this.dimtxsty = TextStyle.Default;
             this.dimclrt = AciColor.ByBlock;
+            this.dimtfill = 0;
             this.dimtfillclr = null;
             this.dimtxt = 0.18;
             this.dimtad = DimensionStyleTextVerticalPlacement.Centered;
@@ -703,6 +705,19 @@ namespace netDxf.Tables
         {
             get { return this.dimtfillclr; }
             set { this.dimtfillclr = value; }
+        }
+         
+        /// <summary>
+        /// Gets or set the style of the background of the dimension text. True means a "Background fill". (DIMTFILL)
+        /// </summary>
+        /// <remarks>
+        /// Default: null<br />
+        /// Only indexed AciColors are supported.
+        /// </remarks>
+        public bool TextFillBackground
+        {
+            get { return this.dimtfill == 1; }
+            set { this.dimtfill = value ? 1 : 0; }
         }
 
         /// <summary>

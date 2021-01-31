@@ -29,8 +29,8 @@ namespace netDxf.Blocks.Dynamic
 
             if (step == EvalStep.Execute)
             {
-
-                Debug.Write($"Moving {PointDelta.X},{PointDelta.Y}\n");
+                context.BlockReference.TransformBy(Matrix4.Translation(PointDelta));
+                //Debug.Write($"Moving {PointDelta.X},{PointDelta.Y}\n");
                 return true;
             }
 

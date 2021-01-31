@@ -1,4 +1,5 @@
 ﻿using netDxf.Blocks.Dynamic.Attributes;
+using netDxf.Blocks.Dynamic.IO;
 using netDxf.IO;
 using System;
 using System.Collections.Generic;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 namespace netDxf.Blocks.Dynamic
 {
     [AcadClassName("AcDbObject")]
-    public abstract class DbObject : DxfObject, IReferencedHandles
+    public abstract class DbObject : DxfObject, IReferencedHandles, ICloneable
     {
         public DbObject(string codename) : base(codename) { }
 
@@ -102,5 +103,19 @@ namespace netDxf.Blocks.Dynamic
             return Enumerable.Empty<DxfObject>();
         }
 
+        public object Clone()
+        {
+            //return null;
+            var constInfo = GetType().GetConstructor(new Type[] { typeof(string) });
+            DbObject copy = constInfo.Invoke(new object[] {CodeName}) as DbObject;
+            Debug.Assert(copy != null);
+
+            CopyReaderWriter copyBuffer = new CopyReaderWriter(h => Document.GetObjectByHandle(h));
+            this.DXFOutLocal(copyBuffer);
+            copyBuffer.Rewind();
+            copy.DXFInLocal(copyBuffer);
+
+            return copy;
+        }
     }
 }

@@ -200,6 +200,29 @@ namespace netDxf.Blocks.Dynamic.Util
             });
             EvalCodes.Add(sizeCode);
         }
+        /*
+        public void ReadPairDictionary<T1, T2>(short elementCode1, short elementCode2, Action<List<Tuple<T1, T2>>> setVariable)
+        {
+            EvalFuncs.Add(() =>
+            {
+                if (Reader.Code == elementCode1)
+                {
+                    List<T1, T2> list = new List<T1, t>();
+                    int num = Reader.ReadShort();
+                    for (int i = 0; i < num; i++)
+                    {
+                        Reader.Next();
+                        list.Add(_readNow<T>(elementCode));
+                    }
+                    setVariable(list);
+                    Reader.Next();
+                    return ReadResult.Done;
+                }
+
+                return ReadResult.Unknown;
+            });
+            EvalCodes.Add(sizeCode);
+        }*/
 
         public void ExecReadUntil(params short[] stopCodes)
         {

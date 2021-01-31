@@ -10,14 +10,11 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    public class NodeEntry
+    public class NodeEntry 
     {
-        private EvalGraph _parentGraph;
         private EvalExpr _expression = null;
-        public NodeEntry(EvalGraph parentGraph)
-        {
-            _parentGraph = parentGraph;
-        }
+        public NodeEntry()
+        {}
 
         public int Index { get; set; }
         public int Id { get; set; }
@@ -98,7 +95,7 @@ namespace netDxf.Blocks.Dynamic
         public int LastNode { get; set; }
         private NodeEntry ReadEvalNode(ICodeValueReader reader)
         {
-            NodeEntry nodeEntry = new NodeEntry(this);
+            NodeEntry nodeEntry = new NodeEntry();
             List<int> entries = new List<int>(4);
 
             while (entries.Count != 4)
