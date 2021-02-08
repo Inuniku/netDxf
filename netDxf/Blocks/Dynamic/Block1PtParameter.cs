@@ -88,7 +88,6 @@ namespace netDxf.Blocks.Dynamic
 
             writer.Write(93, GripId);
         }
-
         internal override void DXFInLocal(ICodeValueReader reader)
         {
             base.DXFInLocal(reader);
@@ -110,6 +109,13 @@ namespace netDxf.Blocks.Dynamic
 
             UpdatedPoint = Point = DefinitionPoint;
         }
+
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            UpdatedPoint = Point = DefinitionPoint;
+        }
+
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
             ReaderAdapter reader2 = new ReaderAdapter(reader);

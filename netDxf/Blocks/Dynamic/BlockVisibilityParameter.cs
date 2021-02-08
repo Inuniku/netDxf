@@ -22,8 +22,6 @@ namespace netDxf.Blocks.Dynamic
     [AcadClassName("AcDbBlockVisibilityParameter", 135625452, 184556386)]
     public class BlockVisibilityParameter : Block1PtParameter
     {
-        private string visibilityState;
-
         public BlockVisibilityParameter(string codename) : base(codename) { }
         public bool Unk { get; set; }
         public int Unk1 { get; set; }
@@ -35,13 +33,13 @@ namespace netDxf.Blocks.Dynamic
         public string CurrentVisibilityState { get; set; }
 
         [ConnectableProperty("VisibilityState")]
-        public string VisibilityState { get => visibilityState; set => visibilityState = value; }
+        public string VisibilityState { get; set; }
 
         // TODO: Safe and lazy evaluation
         internal VisibilityStateSet CurrentVisibilitySet => States.Single(n => n.Name == VisibilityState);
 
 
-
+        // TODO: Multiattribute definition stripping (Part of Visibility States, but not of entity list)
         public override bool Eval(EvalStep step, BlockEvaluationContext context)
         {
             if (!base.Eval(step, context))
@@ -59,7 +57,13 @@ namespace netDxf.Blocks.Dynamic
                         context.SetRepresentationVisibility(AllObjects[i], false);
                     }
 
-                    var visibleNodes = CurrentVisibilitySet.NodeSelection;
+                    string[] visibleNodes = CurrentVisibilitySet.EntitySelection;
+                    for (int i = 0; i < visibleNodes.Length; i++)
+                    {
+                        context.SetRepresentationVisibility(visibleNodes[i], true);
+                    }
+
+                    visibleNodes = CurrentVisibilitySet.NodeSelection;
                     for (int i = 0; i < visibleNodes.Length; i++)
                     {
 
@@ -69,6 +73,13 @@ namespace netDxf.Blocks.Dynamic
             }
 
             return true;
+        }
+
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            VisibilityState = States[0].Name;
+            CurrentVisibilityState = VisibilityState;
         }
 
         internal override void RuntimeDataIn(ICodeValueReader reader)
@@ -110,8 +121,7 @@ namespace netDxf.Blocks.Dynamic
         {
             base.DXFInLocal(reader);
             ReadClassBegin(reader, "AcDbBlockVisibilityParameter");
-            // TODO:
-            Vector3 basePoint = new Vector3();
+            // TODO: Use readable syntax?
             while (reader.Code != 0 && reader.Code != 100)
             {
                 switch (reader.Code)

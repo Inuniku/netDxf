@@ -46,10 +46,10 @@ namespace netDxf.Blocks.Dynamic
                     //Step 01. Translate to Unit space
                     Vector3 dirX = (endPos - basePos).Normalized();
                     Vector3 dirY = Vector3.CrossProduct(Vector3.UnitZ, dirX);
-
-                    Matrix4 toObjectSpace = GeometryUtils.ToObjectSpaceTransform(basePos, dirX, dirY);
+                    Vector3 dirZ = Vector3.UnitZ;
+                    Matrix4 toObjectSpace = GeometryUtils.ToObjectSpaceTransform(basePos, dirX, dirY, dirZ);
                    // Matrix4 toUnitSpace = GeometryUtils.ToUnitSpaceTransform(basePos, dirX, dirY);
-                    Matrix4 reflect = new Matrix4(-1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
+                    Matrix4 reflect = new Matrix4(1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
                     Matrix4 flipTransform = toObjectSpace * reflect * toObjectSpace.Inverse();
                     //Matrix3 flipMatrix = GeometryUtils.FlipMatrix2D(basePos2d, endPos2d, out Vector3 translation);

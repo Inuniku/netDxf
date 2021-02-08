@@ -72,6 +72,9 @@ namespace netDxf.Blocks.Dynamic
             reader2.ExecReadUntil(0, 100, 1001);
         }
 
+        internal virtual void InitializeRuntimeData()
+        {}
+
         internal virtual void RuntimeDataIn(ICodeValueReader reader)
         {
             DxfClassRegistry.GetXRecordClassIdentifier(GetType(), out int id1, out int id2);

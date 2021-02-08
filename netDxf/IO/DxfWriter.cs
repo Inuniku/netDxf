@@ -445,17 +445,17 @@ namespace netDxf.IO
                 // Direct owned resources (not in any table (other than the dictionaries))
                 dicEntry.Value.DXFOutLocal(chunk);
                 WriteXData(dicEntry.Value.XData);
+                Queue<DxfObject> ownedObjects = new Queue<DxfObject>();
+                dicEntry.Value.GetHardReferences(ownedObjects);
 
-                var references = dicEntry.Value.GetHardReferences();
-
-                foreach (var reference in references)
+                foreach (var ownedObject in ownedObjects)
                 {
-                    if(reference is XRecord xRecord)
+                    if(ownedObject is XRecord xRecord)
                     {
                         WriteXRecord(xRecord);
                     }
                     else
-                    if (reference is DbObject obj)
+                    if (ownedObject is DbObject obj)
                     {
                         obj.DXFOutLocal(chunk);
                         WriteXData(obj.XData);
@@ -4461,7 +4461,6 @@ namespace netDxf.IO
             this.chunk.Write(230, def.Normal.Z);
 
             this.chunk.Write(100, SubclassMarker.AttributeDefinition);
-            this.chunk.Write(280, (short)0);
 
             this.chunk.Write(3, this.EncodeNonAsciiCharacters(def.Prompt));
 
@@ -4518,18 +4517,20 @@ namespace netDxf.IO
                     break;
             }
             // TODO: Block Lock
+            this.chunk.Write(280, (short)(def.IsPositionLocked ? 1 : 0));
 
             if (def.EmbeddedMText != null)
             {
+                /*
                 this.chunk.Write(71, (short)4);
                 this.chunk.Write(72, (short)0);
                 this.chunk.Write(11, def.EmbeddedMText.Position.X);
                 this.chunk.Write(21, def.EmbeddedMText.Position.Y);
                 this.chunk.Write(31, def.EmbeddedMText.Position.Z);
-                WriteMText(def.EmbeddedMText, 101, "Embedded Object");
+                WriteMText(def.EmbeddedMText, 101, "Embedded Object");*/
             }
-            else
-                this.WriteXData(def.XData);
+            
+            this.WriteXData(def.XData);
         }
 
         private void WriteAttribute(Attribute attrib)
@@ -4689,7 +4690,7 @@ namespace netDxf.IO
                     this.chunk.Write(74, (short) 0);
                     break;
             }
-
+            this.chunk.Write(280, (short)(attrib.IsPositionLocked ? 1 : 0));
             this.WriteXData(attrib.XData);
         }
 

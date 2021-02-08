@@ -12,20 +12,20 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    [AcadClassName("AcDbBlockLookUpGrip")]
-    public class BlockLookUpGrip : BlockGrip
+    [AcadClassName("AcDbBlockLookupGrip")]
+    public class BlockLookupGrip : BlockGrip
     {
-        public BlockLookUpGrip(string codename) : base(codename) { }
+        public BlockLookupGrip(string codename) : base(codename) { }
         internal override void DXFOutLocal(ICodeValueWriter writer)
         {
             base.DXFOutLocal(writer);
-            WriteClassBegin(writer, "AcDbBlockLookUpGrip");
+            WriteClassBegin(writer, "AcDbBlockLookupGrip");
         }
 
         internal override void DXFInLocal(ICodeValueReader reader)
         {
             base.DXFInLocal(reader);
-            ReadClassBegin(reader, "AcDbBlockLookUpGrip");
+            ReadClassBegin(reader, "AcDbBlockLookupGrip");
             ReaderAdapter reader2 = new ReaderAdapter(reader);
             reader2.ExecReadUntil(0, 100, 1001);
 

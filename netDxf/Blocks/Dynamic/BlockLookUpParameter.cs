@@ -11,23 +11,23 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    [AcadClassName("AcDbBlockLookUpParameter")]
-    public class BlockLookUpParameter : Block1PtParameter
+    [AcadClassName("AcDbBlockLookupParameter")]
+    public class BlockLookupParameter : Block1PtParameter
     {
-        public BlockLookUpParameter(string codename) : base(codename) { }
+        public BlockLookupParameter(string codename) : base(codename) { }
         public string Label { get; set; }
         public string Description { get; set; }
         public int ActionId { get; set; }
 
         public override bool Eval(EvalStep step, BlockEvaluationContext context)
         {
-            throw new NotImplementedException();
+            return true;
         }
 
         internal override void DXFOutLocal(ICodeValueWriter writer)
         {
             base.DXFOutLocal(writer);
-            WriteClassBegin(writer, "AcDbBlockLookUpParameter");
+            WriteClassBegin(writer, "AcDbBlockLookupParameter");
 
             writer.Write(303, Label);
             writer.Write(304, Description);
@@ -38,7 +38,7 @@ namespace netDxf.Blocks.Dynamic
         internal override void DXFInLocal(ICodeValueReader reader)
         {
             base.DXFInLocal(reader);
-            ReadClassBegin(reader, "AcDbBlockLookUpParameter");
+            ReadClassBegin(reader, "AcDbBlockLookupParameter");
 
             ReaderAdapter reader2 = new ReaderAdapter(reader);
 

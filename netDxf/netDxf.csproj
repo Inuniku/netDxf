@@ -86,6 +86,8 @@
     <Compile Include="Blocks\Dynamic\BlockConnectable.cs" />
     <Compile Include="Blocks\Dynamic\BlockEvaluationContext.cs" />
     <Compile Include="Blocks\Dynamic\Attributes\ConnectablePropertyAttribute.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLookupAction.cs" />
+    <Compile Include="Blocks\Dynamic\CloneEntry.cs" />
     <Compile Include="Blocks\Dynamic\ConnectableVectorType.cs" />
     <Compile Include="Blocks\Dynamic\DynamicBlockReferenceContext.cs" />
     <Compile Include="Blocks\Dynamic\EvalStep.cs" />
@@ -94,13 +96,13 @@
     <Compile Include="Blocks\Dynamic\IO\IResolveReader.cs" />
     <Compile Include="Blocks\Dynamic\IO\XRecordValueReader.cs" />
     <Compile Include="Blocks\Dynamic\IO\XRecordValueWriter.cs" />
-    <Compile Include="Blocks\Dynamic\BlockLookUpGrip.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLookupGrip.cs" />
     <Compile Include="Blocks\Dynamic\Block2PtParameter.cs" />
     <Compile Include="Blocks\Dynamic\BlockAction.cs" />
     <Compile Include="Blocks\Dynamic\BlockFlipParameter.cs" />
     <Compile Include="Blocks\Dynamic\BlockFlipGrip.cs" />
     <Compile Include="Blocks\Dynamic\BlockLinearParameter.cs" />
-    <Compile Include="Blocks\Dynamic\BlockLookUpParameter.cs" />
+    <Compile Include="Blocks\Dynamic\BlockLookupParameter.cs" />
     <Compile Include="Blocks\Dynamic\BlockMoveAction.cs" />
     <Compile Include="Blocks\Dynamic\BlockPointParameter.cs" />
     <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\DataType.cs" />
@@ -135,7 +137,6 @@
     <Compile Include="Blocks\Dynamic\DynamicBlockPurgePreventer.cs" />
     <Compile Include="Blocks\Dynamic\EvalExpr.cs" />
     <Compile Include="Blocks\Dynamic\EvalGraph.cs" />
-    <Compile Include="Blocks\Dynamic\IReferencedObjects.cs" />
     <Compile Include="Blocks\Dynamic\ParamValueSetType.cs" />
     <Compile Include="Blocks\Dynamic\Property\BlockReferenceProperty\DynamicBlockReferenceProperty.cs" />
     <Compile Include="Blocks\Dynamic\Util\GeometryUtils.cs" />

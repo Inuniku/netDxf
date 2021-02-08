@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 
 namespace netDxf.Objects
 {
+    //TODO make a IDictionary or something
     [AcadClassName("AcDbDictionary")]
     public class DocumentDictionary : DbObject
     {
@@ -80,9 +81,11 @@ namespace netDxf.Objects
         }
         internal override long AssignHandle(long entityNumber)
         {
+            base.AssignHandle(entityNumber);
+
             foreach (var entry in Values)
             {
-                Debug.Assert(string.IsNullOrEmpty(entry.Handle));
+                //Debug.Assert(string.IsNullOrEmpty(entry.Handle));
                 entityNumber = entry.AssignHandle(entityNumber);
             }
 
@@ -118,21 +121,64 @@ namespace netDxf.Objects
             _dictionary.Remove(key);
         }
 
-        public override IEnumerable<DxfObject> GetHardReferences()
+
+        public override void GetHardReferences(Queue<DxfObject> result, bool includeSelf = false)
         {
-            List<DxfObject> _result = new List<DxfObject>();
+            base.GetHardReferences(result, includeSelf);
             foreach (var entry in _dictionary)
             {
-                DbObject dbValue = entry.Value as DbObject;
-
-                _result.Add(entry.Value);
-                if (dbValue != null)
+                result.Enqueue(entry.Value);
+                if (entry.Value is DbObject dbValue)
                 {
-                    _result.AddRange(dbValue.GetHardReferences());
+                    dbValue.GetHardReferences(result, includeSelf);
+                }
+            }
+        }
+
+        public override void SetHardObjects(Queue<DxfObject> ownedObjects, bool includeSelf = false)
+        {
+
+            base.SetHardObjects(ownedObjects, includeSelf);
+            for (int i = 0; i < _dictionary.Count(); i++)
+            {
+                var entryObj = ownedObjects.Dequeue();
+
+                string key = _dictionary.ElementAt(i).Key;
+                _dictionary[key] = entryObj;
+                entryObj.Owner = this;
+                if (entryObj is DbObject dbValue)
+                {
+                    dbValue.SetHardObjects(ownedObjects, includeSelf);
                 }
 
             }
-            return _result;
+
+        }
+        public override void SetSoftHandles(Queue<string> referencedHandles, bool includeSelf = false)
+        {
+            base.SetSoftHandles(referencedHandles, includeSelf);
+            for (int i = 0; i < _dictionary.Count(); i++)
+            {
+                var entryObj = _dictionary.ElementAt(i).Value;
+                if (entryObj is DbObject dbValue)
+                {
+                    dbValue.SetSoftHandles(referencedHandles, includeSelf);
+                }
+            }
+        }
+
+
+        public override void GetSoftHandles(Queue<string> result, bool includeSelf = false)
+        {
+            base.GetSoftHandles(result, includeSelf);
+            for (int i = 0; i < _dictionary.Count(); i++)
+            {
+                var entryObj = _dictionary.ElementAt(i).Value;
+                if (entryObj is DbObject dbValue)
+                {
+                    dbValue.GetSoftHandles(result, includeSelf);
+                }
+            }
         }
 
         internal override void DXFInLocal(ICodeValueReader reader)
@@ -153,8 +199,7 @@ namespace netDxf.Objects
                     r.Next(); Debug.Assert(r.Code == 350);
                     string second = r.ReadString();
                     r.Next();
-                    var secondObject = ((IResolveReader)r).ResolveHandle(second);
-                    _dictionary.Add(first, secondObject);
+                    _dictionary.Add(first, null);
                 }
             });
 

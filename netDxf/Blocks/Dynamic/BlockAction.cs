@@ -42,5 +42,23 @@ namespace netDxf.Blocks.Dynamic
 
             reader2.ExecReadUntil(0, 100, 1001);
         }
+
+        public override void SetSoftHandles(Queue<string> referencedHandles, bool includeSelf = false)
+        {
+            base.SetSoftHandles(referencedHandles, includeSelf);
+            for (int i = 0; i < Selection.Length; i++)
+            {
+                Selection[i] = referencedHandles.Dequeue();
+            }
+        }
+
+        public override void GetSoftHandles(Queue<string> result, bool includeSelf = false)
+        {
+            base.GetSoftHandles(result, includeSelf);
+            for (int i = 0; i < Selection.Length; i++)
+            {
+                result.Enqueue(Selection[i]);
+            }
+        }
     }
 }

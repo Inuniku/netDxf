@@ -46,11 +46,20 @@ namespace netDxf.Blocks.Dynamic
 
             if (step == EvalStep.Commit)
             {
+                var affectedNodes = context.EvalGraph.Expressions.Where(e => Selection.Contains(e.Handle)).Select(n => n.NodeId);
+                context.AdditionalNodes.AddRange(affectedNodes);
+
                 AngleOffset = CurrentAngleOffset;
             }
 
 
             return true;
+        }
+
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            CurrentAngleOffset = AngleOffset;
         }
 
         internal override void RuntimeDataIn(ICodeValueReader reader)
@@ -59,7 +68,7 @@ namespace netDxf.Blocks.Dynamic
 
             base.RuntimeDataIn(reader);
 
-            AngleOffset = CurrentAngleOffset = reader2.ReadNow<double>(40);
+            CurrentAngleOffset = reader2.ReadNow<double>(40);
         }
 
         internal override void RuntimeDataOut(ICodeValueWriter writer)

@@ -23,7 +23,7 @@ namespace netDxf.Blocks.Dynamic.Property
             Parameter = property;
             Context = context;
         }
-
+        // TODO... More Like a function not a property
         internal abstract object InternalValue { get; set; }
 
         public object Value { get => InternalValue; set => _setValue = value; }
@@ -46,8 +46,9 @@ namespace netDxf.Blocks.Dynamic.Property
 
         public bool Apply()
         {
-            if(_setValue != null)
-
+            if (_setValue == null)
+                return false;
+            
 
             if (!Context.HasRepresentation)
                 Context.CreateRepresentation();
@@ -56,7 +57,9 @@ namespace netDxf.Blocks.Dynamic.Property
 
             InternalValue = _setValue;
             Context.ChangedNodes.Add(Parameter);
-            Context.AddHistoryChange(Parameter.NodeId, Parameter.Name, _setValue);
+            // TODO AutoCad stores Parameter.Label
+            //Context.AddHistoryChange(Parameter.NodeId, Parameter.Name, _setValue);
+            Context.AddHistoryChange(Parameter.NodeId, PropertyName, _setValue);
             Context.CommitEvaluation();
 
 

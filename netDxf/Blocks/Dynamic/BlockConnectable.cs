@@ -142,10 +142,5 @@ namespace netDxf.Blocks.Dynamic
 
             return hasGetter;
         }
-
-        public IEnumerable<string> GetConnections()
-        {
-            return connectionGetterDict.Keys;
-        }
     }
 }

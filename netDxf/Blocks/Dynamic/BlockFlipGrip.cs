@@ -66,6 +66,12 @@ namespace netDxf.Blocks.Dynamic
             reader2.ExecReadUntil(0, 100, 1001);
         }
 
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            FlipState = UpdatedFlipState = FlipState.NotFlipped;
+        }
+
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
             ReaderAdapter reader2 = new ReaderAdapter(reader);

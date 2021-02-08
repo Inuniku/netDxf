@@ -3270,6 +3270,7 @@ namespace netDxf.IO
             //MText embeddedMText = null;
             //short version = 0;
             //short vericalJustification = 0;
+            bool isPositionLocked = false;
             bool isMTEXT = false;
             TextInfo textSubClassData =  ReadTextInfo();
             this.chunk.Next();
@@ -3292,6 +3293,10 @@ namespace netDxf.IO
                         break;
                     case 70:
                         flags = (AttributeFlags)this.chunk.ReadShort();
+                        this.chunk.Next();
+                        break;
+                    case 280:
+                        isPositionLocked = this.chunk.ReadShort() != 0;
                         this.chunk.Next();
                         break;
                     case 101:
@@ -3326,6 +3331,7 @@ namespace netDxf.IO
                 WidthFactor = textSubClassData.WidthFactor,
                 ObliqueAngle = textSubClassData.ObliqueAngle,
                 Rotation = textSubClassData.Rotation,
+                IsPositionLocked = isPositionLocked,
                 EmbeddedMText = null
             };
 
@@ -3357,7 +3363,7 @@ namespace netDxf.IO
             double rotation = 0.0;
             Vector3 normal = Vector3.UnitZ;
             List<XData> xData = new List<XData>();
-
+            bool isPositionLocked = false;
             // DxfObject codes
             this.chunk.Next();
             while (this.chunk.Code != 100)
@@ -3533,6 +3539,10 @@ namespace netDxf.IO
                         normal.Z = this.chunk.ReadDouble();
                         this.chunk.Next();
                         break;
+                    case 280:
+                        isPositionLocked = this.chunk.ReadShort() != 0;
+                        this.chunk.Next();
+                        break;
                     case 101:
                         // Case of MTEXT
                         isMText = true;
@@ -3576,6 +3586,7 @@ namespace netDxf.IO
             {
                 return null;
             }
+
             /*
             if(isMText)
             {
@@ -3604,7 +3615,8 @@ namespace netDxf.IO
                 Width = width,
                 WidthFactor = MathHelper.IsZero(widthFactor) ? style.WidthFactor : widthFactor,
                 ObliqueAngle = obliqueAngle,
-                Rotation = rotation
+                Rotation = rotation,
+                IsPositionLocked = isPositionLocked
             };
 
             attribute.XData.AddRange(xData);
@@ -10990,7 +11002,16 @@ namespace netDxf.IO
                 {
                     dim.StyleOverrides.AddRange(this.ReadDimensionStyleOverrideXData(xDataOverrides));
                 }
-            }
+            }/*
+            foreach (Dimension dim in this.blockEntities.Values.SelectMany(v => v).OfType<Dimension>())
+            {
+                XData xDataOverrides;
+                if (dim.XData.TryGetValue(ApplicationRegistry.DefaultName, out xDataOverrides))
+                {
+                    dim.StyleOverrides.AddRange(this.ReadDimensionStyleOverrideXData(xDataOverrides));
+                }
+            }*/
+
             foreach (Leader leader in this.doc.Leaders)
             {
                 XData xDataOverrides;
@@ -11090,15 +11111,20 @@ namespace netDxf.IO
             }
             if (dynamicBlockObjects.TryGetValue(handle, out DbObject subObj))
             {
-                List<DxfObject> resolvedObjects = new List<DxfObject>();
-                foreach (var subHandle in subObj.GetHardHandles())
+                
+                Queue<string> handles = new Queue<string>();
+                Queue<DxfObject> resolvedObjects = new Queue<DxfObject>();
+                subObj.GetHardHandles(handles);
+
+                foreach (var subHandle in handles)
                 {
                     var element = ResolveHardReference(subHandle);
-                    resolvedObjects.Add(element);
+                    resolvedObjects.Enqueue(element);
                     element.Owner = subObj;
                     doc.AddedObjects.Add(subHandle, element);
                 }
-                subObj.SetHardHandles(resolvedObjects);
+
+                subObj.SetHardObjects(resolvedObjects);
 
                 return subObj;
             }

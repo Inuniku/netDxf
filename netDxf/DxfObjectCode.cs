@@ -531,6 +531,8 @@ namespace netDxf
 
         public const string BlockMoveAction = "BLOCKMOVEACTION";
 
+        public const string BlockLookupAction = "BLOCKLOOKUPACTION";
+
         public const string BlockRepresentationData = "ACDB_BLOCKREPRESENTATION_DATA";
 
         public const string DynamicBlockPurgePreventer = "ACDB_DYNAMICBLOCKPURGEPREVENTER_VERSION";

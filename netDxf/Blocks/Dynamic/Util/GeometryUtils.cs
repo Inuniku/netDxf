@@ -24,16 +24,13 @@ namespace netDxf.Blocks.Dynamic.Util
         public static void StretchObject(EntityObject entity, int[] indices, Vector3 delta)
         {
             Vector2 delta2d = new Vector2(delta.X, delta.Y);
-
+            
             if (entity is Line line)
             {
-                for (int i = 0; i < indices.Length; i++)
-                {
-                    if (indices.Contains(0))
-                        line.StartPoint += delta;
-                    if (indices.Contains(1))
-                        line.EndPoint += delta;
-                }
+                if (indices.Contains(0))
+                    line.StartPoint += delta;
+                if (indices.Contains(1))
+                    line.EndPoint += delta;
             }
             else
             if (entity is Polyline pline)
@@ -44,6 +41,12 @@ namespace netDxf.Blocks.Dynamic.Util
             else
             if (entity is LwPolyline lwpline)
             {
+
+                for (int i = 0; i < indices.Length; i++)
+                    lwpline.Vertexes[indices[i]].Position += delta2d;
+
+                // TODO: Implement sag code
+                /*
                 int prevLoopId = -1;
                 double prevLoopSag = 0;
                 Vector2 prevLoopPos = new Vector2();
@@ -76,34 +79,70 @@ namespace netDxf.Blocks.Dynamic.Util
                     Vector2 nextPos = lwpline.Vertexes[nextId].Position;
                     double dist = Vector2.Distance(thisPos, nextPos);
                     double sag = lwpline.Vertexes[thisId].Bulge * dist * 0.5;
-                    
+
                     // Update position (and sag)
                     Vector2 updatedPosition = thisPos + delta2d;
                     lwpline.Vertexes[thisId].Position = updatedPosition;
 
                     // Update prev segment sag
                     double updatedDistance = Vector2.Distance(prevLoopPos, updatedPosition);
-                    lwpline.Vertexes[prevId].Bulge = prevLoopSag / updatedDistance;
+                    if(prevId != -1)
+                        lwpline.Vertexes[prevId].Bulge = prevLoopSag / updatedDistance;
 
                     prevLoopId = thisId;
                     prevLoopSag = sag;
                     prevLoopPos = thisPos;
                 }
 
-                if(prevLoopId + 1 < lwpline.Vertexes.Count)
+                if (prevLoopId + 1 < lwpline.Vertexes.Count)
                 {
                     Vector2 nextPos = lwpline.Vertexes[prevLoopId + 1].Position;
                     double dist = Vector2.Distance(prevLoopPos, nextPos);
                     lwpline.Vertexes[prevLoopId].Bulge = prevLoopSag / dist;
-                }
+                }*/
             }
             else
             if (entity is Wipeout wipeout)
             {
-                wipeout.ClippingBoundary = new ClippingBoundary(wipeout.ClippingBoundary.Vertexes.Select(v => delta2d));
+
+                List<Vector2> vertices = wipeout.ClippingBoundary.Vertexes.Select(s => s).ToList()  ;
+                for (int i = 0; i < indices.Length; i++)
+                    vertices[indices[i]] += delta2d;
+
+                wipeout.ClippingBoundary = new ClippingBoundary(vertices);
             }
             else
-                throw new NotImplementedException("Stretching object is not supported");
+            if (entity is Arc arc)
+            {
+                // TODO: real arc stretching?
+                for (int i = 0; i < indices.Length; i++)
+                {
+                }
+
+                arc.Center += delta;
+            }
+            else 
+            if(entity is Dimension)
+            {
+
+                if(entity is LinearDimension linear)
+                {
+                    if (indices.Contains(0))
+                        linear.FirstReferencePoint += delta2d;
+                    if (indices.Contains(1))
+                        linear.SecondReferencePoint += delta2d;
+                    if (indices.Contains(2))
+                        linear.TextReferencePoint += delta2d;
+                    if (indices.Contains(3))
+                        linear.DefinitionPoint += delta2d;
+
+                    linear.Update();
+                }
+                else
+                    throw new NotImplementedException($"Stretching entity type {entity.GetType().Name} is not supported");
+            }
+            else
+                throw new NotImplementedException($"Stretching entity type {entity.GetType().Name} is not supported");
         }
 
         public static Matrix3 FlipMatrix2D(Vector2 p1, Vector2 p2, out Vector3 translate)
@@ -118,7 +157,7 @@ namespace netDxf.Blocks.Dynamic.Util
 
 
             double a = (dy * dy - (dx * dx));
-            double b = (-2.0 * dx * dy) ;
+            double b = (-2.0 * dx * dy);
             double c = (-2.0 * dx * dy);
             double _d = ((dx - dy) * (dx + dy));
             double inv_f = (1.0 / f);
@@ -129,9 +168,9 @@ namespace netDxf.Blocks.Dynamic.Util
             return mat * inv_f;
         }
 
-        internal static Matrix4 ToObjectSpaceTransform(Vector3 basePos, Vector3 dirX, Vector3 dirY)
+        internal static Matrix4 ToObjectSpaceTransform(Vector3 basePos, Vector3 dirX, Vector3 dirY, Vector3 dirZ)
         {
-            return new Matrix4(dirX.X, dirY.X, 0, basePos.X, dirX.Y, dirY.Y, 0, basePos.Y, dirX.Z, dirY.Z, 0, basePos.Z, 0, 0, 0, 1);
+            return new Matrix4(dirX.X, dirY.X, dirZ.X, basePos.X, dirX.Y, dirY.Y, dirZ.Y, basePos.Y, dirX.Z, dirY.Z, dirZ.Z, basePos.Z, 0, 0, 0, 1);
         }
     }
 }

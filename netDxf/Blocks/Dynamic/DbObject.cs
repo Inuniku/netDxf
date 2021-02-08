@@ -1,6 +1,7 @@
 ﻿using netDxf.Blocks.Dynamic.Attributes;
 using netDxf.Blocks.Dynamic.IO;
 using netDxf.IO;
+using netDxf.Objects;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 namespace netDxf.Blocks.Dynamic
 {
     [AcadClassName("AcDbObject")]
-    public abstract class DbObject : DxfObject, IReferencedHandles, ICloneable
+    public abstract class DbObject : DxfObject, ICloneable
     {
         public DbObject(string codename) : base(codename) { }
 
@@ -83,38 +84,139 @@ namespace netDxf.Blocks.Dynamic
             }
         }
 
-        public virtual IEnumerable<string> GetHardHandles()
+
+
+        public virtual void SetSoftHandles(Queue<string> referencedHandles, bool includeSelf = false)
         {
-            return Enumerable.Empty<string>();
+            if (includeSelf)
+                OwnerHandle = referencedHandles.Dequeue();
         }
 
-        public virtual void SetHardHandles(IEnumerable<DxfObject> objects)
-        { }
 
-        internal virtual IEnumerable<string> GetSoftHandles()
+        public virtual void GetSoftHandles(Queue<string> result, bool includeSelf = false)
         {
-            return Enumerable.Empty<string>();
+            if (includeSelf)
+                result.Enqueue(OwnerHandle);
         }
 
-        internal virtual void SetSoftHandles(IEnumerable<DxfObject> objects)
-        { }
-        public virtual IEnumerable<DxfObject> GetHardReferences()
+
+        public virtual void GetHardHandles(Queue<string> result, bool includeSelf = false)
         {
-            return Enumerable.Empty<DxfObject>();
+            if (includeSelf)
+                result.Enqueue(Handle);
+        }
+
+        public virtual void SetHardObjects(Queue<DxfObject> ownedObjects, bool includeSelf = false)
+        {
+            if (includeSelf)
+            {
+                Handle = ownedObjects.Dequeue().Handle;
+            }
+        }
+
+        public virtual void GetHardReferences(Queue<DxfObject> result, bool includeSelf = false)
+        {
+            if (includeSelf)
+                result.Enqueue(this);
         }
 
         public object Clone()
         {
-            //return null;
+            return InternalClone(null);
+        }
+        
+        internal object InternalClone(CloneEntry[] clonemap)
+        {
+            // Clone also all owned items
+            Queue<DxfObject> ownedObjects = new Queue<DxfObject>();
+            Queue<DxfObject> clonedObjects = new Queue<DxfObject>();
+            GetHardReferences(ownedObjects);
+
+            foreach (var ownedObject in ownedObjects)
+            {
+                DxfObject clonedObject;
+                if (ownedObject is XRecord record)
+                {
+                    XRecord clonedXRecord = new XRecord()
+                    {
+                        Flags = record.Flags,
+                        OwnerHandle = record.OwnerHandle
+                    };
+
+                    foreach (XRecordEntry entry in record.Entries)
+                    {
+                        clonedXRecord.Entries.Add(new XRecordEntry(entry.Code, entry.Value));
+                    }
+                    clonedObject = clonedXRecord;
+                }
+                else
+                {
+                    DbObject clonedDbObject = (DbObject)((DbObject)ownedObject).__Clone();
+                    clonedDbObject.Owner = null;
+                    clonedDbObject.Handle = null;
+                    clonedObject = clonedDbObject;
+                }
+                clonedObjects.Enqueue(clonedObject);
+            }
+
+            DbObject copy = (DbObject)__Clone();
+   
+            // Clone this object an all data (still points to old references)
+            /*if (Document != null)
+            {
+                for (int i = 0; i < clonedObjects.Count; i++)
+                {
+                    clonedObjects.ElementAt(i).Handle = Document.NumHandles.ToString("X");
+                    Document.NumHandles++;
+                }
+
+                copy.Handle = Document.NumHandles.ToString("X");
+                Document.NumHandles++;
+            }*/
+
+            copy.SetHardObjects(clonedObjects);
+            copy.Owner = null;
+            copy.OwnerHandle = null;
+            copy.Handle = null;
+
+            /*
+            Document.NumHandles = copy.AssignHandle(Document.NumHandles);
+           
+            Dictionary<string, string> clonedMap = new Dictionary<string, string>();
+            for(int i = 0; i < clonedObjects.Count; i++)
+            {
+                clonedMap[ownedObjects.ElementAt(i).Handle] = clonedObjects.ElementAt(i).Handle;
+            }
+            clonedMap.Add(Handle, copy.Handle);*/
+
+            // Update all potentially cloned pointers
+            /*Queue<string> pointer = new Queue<string>();
+            Queue<string> updatedPointer = new Queue<string>();
+            copy.GetSoftHandles(pointer, false);
+            
+
+            for (int i = 0; i < pointer.Count; i++)
+            { 
+                foreach(var entry in clonemap)
+                {
+
+                }
+            }
+
+            copy.SetSoftHandles(pointer, false);*/
+            return copy;
+        }
+
+        internal object __Clone()
+        {
             var constInfo = GetType().GetConstructor(new Type[] { typeof(string) });
-            DbObject copy = constInfo.Invoke(new object[] {CodeName}) as DbObject;
+            DbObject copy = constInfo.Invoke(new object[] { CodeName }) as DbObject;
             Debug.Assert(copy != null);
 
             CopyReaderWriter copyBuffer = new CopyReaderWriter(h => Document.GetObjectByHandle(h));
-            this.DXFOutLocal(copyBuffer);
+            DXFOutLocal(copyBuffer);
             copyBuffer.Rewind();
             copy.DXFInLocal(copyBuffer);
-
             return copy;
         }
     }

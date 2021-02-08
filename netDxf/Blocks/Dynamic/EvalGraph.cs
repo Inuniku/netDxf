@@ -10,11 +10,11 @@ using System.Threading.Tasks;
 
 namespace netDxf.Blocks.Dynamic
 {
-    public class NodeEntry 
+    public class NodeEntry
     {
         private EvalExpr _expression = null;
         public NodeEntry()
-        {}
+        { }
 
         public int Index { get; set; }
         public int Id { get; set; }
@@ -93,6 +93,8 @@ namespace netDxf.Blocks.Dynamic
         public EdgeEntry[] Edges { get; set; }
         public NodeEntry[] Nodes { get; set; }
         public int LastNode { get; set; }
+        public IEnumerable<EvalExpr> Expressions => Nodes.Select(n => n.Expression);
+
         private NodeEntry ReadEvalNode(ICodeValueReader reader)
         {
             NodeEntry nodeEntry = new NodeEntry();
@@ -144,22 +146,10 @@ namespace netDxf.Blocks.Dynamic
 
         internal void Eval(List<int> evalNodes, BlockEvaluationContext context, EvalStep step = EvalStep.Execute)
         {
-            // Get all Nodes that could be active (Union of all SubGraphs)
-            HashSet<int> toProcessNodes = new HashSet<int>();
-
-            for (int i = 0; i < evalNodes.Count; i++)
-            {
-                List<int> subNodes = new List<int>();
-                GetSubNodes(new List<int> { evalNodes[i] }, subNodes);
-
-                toProcessNodes.UnionWith(subNodes);
-            }
+            // TODO: Optimize this code!
+            GetPredecessorCountList(evalNodes, out List<int> nodes, out List<int> preCount);
 
             // Kind of naiive TopoSort
-            // TODO: Optimize this code!
-            List<int> nodes = new List<int>(toProcessNodes);
-            List<int> preCount = nodes.Select(i => GetPredecessorCount(i, toProcessNodes)).ToList();
-
             bool isDone = false;
             bool isLoop = true;
             do
@@ -179,7 +169,6 @@ namespace netDxf.Blocks.Dynamic
                         bool result = entry.Expression.Eval(step, context);
                         isLoop = false;
 
-
                         // Toposort: Decrease count of successors
                         List<int> successors = new List<int>();
                         GetSuccessors(nodes[i], successors);
@@ -192,8 +181,50 @@ namespace netDxf.Blocks.Dynamic
                         preCount[i] = -1;
                     }
                 }
+
+                foreach (int additionalNode in context.AdditionalNodes)
+                {
+                    if (!nodes.Contains(additionalNode))
+                    {
+                        GetPredecessorCountList(context.AdditionalNodes, out List<int> newNodes, out List<int> newPreCount);
+
+                        for(int i = 0; i  < newNodes.Count; i++)
+                        {
+                            if(!nodes.Contains(newNodes[i]))
+                            {
+                                nodes.Add(newNodes[i]);
+                                preCount.Add(newPreCount[i]);
+                            }
+                        }
+                        isDone = false;
+                        break;
+                    }
+                }
+
+                context.AdditionalNodes.Clear();
             } while (!isDone && !isLoop);
         }
+
+        private void GetPredecessorCountList(List<int> evalNodes, out List<int> nodes, out List<int> preCounts)
+        {
+            // Get all Nodes that could be active (Union of all SubGraphs)
+            HashSet<int> toProcessNodes = new HashSet<int>();
+
+            for (int i = 0; i < evalNodes.Count; i++)
+            {
+                List<int> subNodes = new List<int>();
+                GetSubNodes(new List<int> { evalNodes[i] }, subNodes);
+
+                toProcessNodes.UnionWith(subNodes);
+            }
+
+            // TODO: Optimize this code!
+            nodes = new List<int>(toProcessNodes);
+            preCounts = nodes.Select(i => GetPredecessorCount(i, toProcessNodes)).ToList();
+        }
+
+
+
         private int GetPredecessorCount(int nodeId, HashSet<int> processingNodes)
         {
             NodeEntry entry = GetNodeEntry(nodeId);
@@ -428,30 +459,54 @@ namespace netDxf.Blocks.Dynamic
             Edges = edges.ToArray();
             Nodes = nodes.ToArray();
         }
-
-        public override IEnumerable<string> GetHardHandles()
-        {
-            return base.GetHardHandles().Concat(Nodes.Select(n => n.ExprId)).ToArray();
-        }
-        public override void SetHardHandles(IEnumerable<DxfObject> objects)
-        {
-            var dxfObjects = objects.TakeLast(Nodes.Count());
-            for (int i = 0; i < dxfObjects.Count(); i++)
-            {
-                Nodes[i].Expression = (EvalExpr)dxfObjects.ElementAt(i);
-            }
-
-            base.SetHardHandles(objects.Take(objects.Count() - Nodes.Count()));
-        }
-
-        public override IEnumerable<DxfObject> GetHardReferences()
-        {
-            return base.GetHardReferences().Concat(Nodes.Select(n => n.Expression));
-        }
-
         internal EvalExpr GetNode(int id)
         {
             return Nodes.FirstOrDefault(n => n.Id == id)?.Expression as EvalExpr;
+        }
+        public override void SetSoftHandles(Queue<string> referencedHandles, bool includeSelf = false)
+        {
+            base.GetSoftHandles(referencedHandles, includeSelf);
+            for (int i = 0; i < Nodes.Count(); i++)
+            {
+                Nodes[i].Expression.SetSoftHandles(referencedHandles);
+            }
+        }
+
+        public override void GetSoftHandles(Queue<string> result, bool includeSelf = false)
+        {
+            base.GetSoftHandles(result, includeSelf);
+            for (int i = 0; i < Nodes.Count(); i++)
+            {
+                Nodes[i].Expression.GetSoftHandles(result);
+            }
+        }
+
+        public override void GetHardHandles(Queue<string> result, bool includeSelf = false)
+        {
+            base.GetHardHandles(result, includeSelf);
+            for (int i = 0; i < Nodes.Count(); i++)
+            {
+                result.Enqueue(Nodes[i].ExprId);
+            }
+        }
+
+        public override void SetHardObjects(Queue<DxfObject> ownedObjects, bool includeSelf = false)
+        {
+            base.SetHardObjects(ownedObjects, includeSelf);
+            for (int i = 0; i < Nodes.Count(); i++)
+            {
+                Nodes[i].Expression = (EvalExpr)ownedObjects.Dequeue();
+                Nodes[i].Expression.Owner = this;
+            }
+        }
+
+        public override void GetHardReferences(Queue<DxfObject> result, bool includeSelf = false)
+        {
+            base.GetHardReferences(result, includeSelf);
+            for (int i = 0; i < Nodes.Count(); i++)
+            {
+                result.Enqueue(Nodes[i].Expression);
+            }
         }
     }
 }

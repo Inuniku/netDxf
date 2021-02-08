@@ -163,6 +163,8 @@ namespace netDxf.Entities
             this.alignment = definition.Alignment;
             this.isBackward = definition.IsBackward;
             this.isUpsideDown = definition.IsUpsideDown;
+
+            IsPositionLocked = definition.IsPositionLocked;
         }
 
         #endregion
@@ -466,6 +468,13 @@ namespace netDxf.Entities
             set { this.isUpsideDown = value; }
         }
 
+        /// <summary>
+        /// Is the manipulation of the Position of this object locked in GUI?
+        /// </summary>
+        public bool IsPositionLocked
+        {
+            get; set;
+        }
         #endregion
 
         #region public methods
@@ -699,7 +708,8 @@ namespace netDxf.Entities
                 Rotation = this.rotation,
                 Alignment = this.alignment,
                 IsBackward = this.isBackward,
-                IsUpsideDown = this.isUpsideDown
+                IsUpsideDown = this.isUpsideDown,
+                IsPositionLocked = this.IsPositionLocked
             };
 
             foreach (XData data in this.XData.Values)

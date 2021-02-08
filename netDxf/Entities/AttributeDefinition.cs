@@ -483,6 +483,14 @@ namespace netDxf.Entities
             internal set { base.Owner = value; }
         }
 
+        /// <summary>
+        /// Is the manipulation of this object locked?
+        /// </summary>
+        public bool IsPositionLocked
+        {
+            get; set;
+        }
+
         public MText EmbeddedMText
         {
             get;
@@ -710,7 +718,8 @@ namespace netDxf.Entities
                 Rotation = this.rotation,
                 Alignment = this.alignment,
                 IsBackward = this.isBackward,
-                IsUpsideDown = this.isUpsideDown
+                IsUpsideDown = this.isUpsideDown,
+                IsPositionLocked = this.IsPositionLocked
             };
 
             foreach (XData data in this.XData.Values)

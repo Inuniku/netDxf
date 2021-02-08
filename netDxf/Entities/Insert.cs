@@ -23,7 +23,9 @@
 using System;
 using System.Collections.Generic;
 using netDxf.Blocks;
+using netDxf.Blocks.Dynamic;
 using netDxf.Collections;
+using netDxf.Objects;
 using netDxf.Tables;
 using netDxf.Units;
 
@@ -706,6 +708,20 @@ namespace netDxf.Entities
             // copy extended data
             foreach (XData data in this.XData.Values)
                 entity.XData.Add((XData) data.Clone());
+
+            if(ExtensionDictionary != null)
+            {
+                entity.ExtensionDictionary = (DocumentDictionary)ExtensionDictionary.Clone();
+                /*
+                new CloneEntry[] {
+                        new CloneEntry(Block, entity.Block),
+                        new CloneEntry(Block.Record, entity.Block.Record),
+                        new CloneEntry(Block.Entities, entity.Block.Entities),
+                        new CloneEntry(Layer, entity.Layer),
+                        new CloneEntry(Linetype, entity.Linetype),
+                        new CloneEntry(attributes, copyAttributes)
+                        }*/
+            }
 
             return entity;
         }

@@ -51,11 +51,25 @@ namespace netDxf.Blocks.Dynamic
                 double deltaX = (double)StretchX.Evaluate(context);
                 double deltaY = (double)StretchY.Evaluate(context);
 
+                if (deltaX == deltaY && deltaY == 0.0)
+                    return true;
+
                 StretchObjects(new Vector3(deltaX, deltaY,0), context);
+
+                context.AdditionalNodes.AddRange(NodeSelection.Select(s => s.NodeId));
 
                 Debug.Write("Stretching" + deltaX + "," +deltaY);
                 return true;
             }
+
+            if (step == EvalStep.Commit)
+            {
+
+                context.AdditionalNodes.AddRange(NodeSelection.Select(s => s.NodeId));
+
+                return true;
+            }
+
             return true;
         }
 
@@ -68,12 +82,40 @@ namespace netDxf.Blocks.Dynamic
             Block repBlock = contex.RepresentationBlock;
 
             // Move Params
-            /*
-            var graphObjects = contex.EvalGraph.Nodes.Where(n => StretchSelection.Single(s => s.ndle)).Select(n => n.Expression);
-            foreach (var graphObject in graphObjects)
+
+            foreach (var nodeSelection in NodeSelection)
             {
-                BlockParameter blockParam = (BlockParameter)graphObject;
-            }*/
+                var indices = nodeSelection.Indices;
+                BlockElement blockParam = (BlockElement)contex.EvalGraph.GetNode(nodeSelection.NodeId);
+                if (blockParam is Block1PtParameter block1PtParam)
+                {
+                    block1PtParam.Point += delta;
+                    block1PtParam.UpdatedPoint += delta;
+                }
+                else
+                if (blockParam is Block2PtParameter block2PtParam)
+                {
+                    
+                    if (indices.Contains(0))
+                    {
+                        block2PtParam.Point1 += delta;
+                        block2PtParam.UpdatedPoint1 += delta;
+                    }
+                    if (indices.Contains(1))
+                    {
+                        block2PtParam.Point2 += delta;
+                        block2PtParam.UpdatedPoint2 += delta;
+                    }
+                }
+                else
+                if (blockParam is BlockGrip grip)
+                {
+                    grip.Location += delta;
+                    grip.UpdatedLocation += delta;
+                }
+                else
+                    throw new NotImplementedException();
+            }
 
             // Move Entities
             Debug.Assert(dynamicBlock.Entities.Count == repBlock.Entities.Count);
@@ -86,7 +128,6 @@ namespace netDxf.Blocks.Dynamic
                 int index = dynamicBlock.Entities.IndexOf(originalEntity);
                 EntityObject entity = repBlock.Entities[index];
                 GeometryUtils.StretchObject(entity, selection.Indices, delta);
-
             }
         }
 
@@ -135,6 +176,13 @@ namespace netDxf.Blocks.Dynamic
             }
             return result.ToArray();
         }
+
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            CurrentAngleOffset = AngleOffset;
+        }
+
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
             ReaderAdapter reader2 = new ReaderAdapter(reader);
@@ -207,6 +255,24 @@ namespace netDxf.Blocks.Dynamic
             reader2.Read<short>(280, v => XYScaleType = v);
 
             reader2.ExecReadUntil(0, 100, 1001);
+        }
+
+        public override void SetSoftHandles(Queue<string> referencedHandles, bool includeSelf = false)
+        {
+            base.SetSoftHandles(referencedHandles, includeSelf);
+            for(int i = 0; i < StretchSelection.Length; i++)
+            {
+                StretchSelection[i].StretchObject = referencedHandles.Dequeue();
+            }
+        }
+
+        public override void GetSoftHandles(Queue<string> result, bool includeSelf = false)
+        {
+            base.GetSoftHandles(result, includeSelf);
+            for (int i = 0; i < StretchSelection.Length; i++)
+            {
+                result.Enqueue(StretchSelection[i].StretchObject);
+            }
         }
     }
 }

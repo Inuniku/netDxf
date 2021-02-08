@@ -86,6 +86,11 @@ namespace netDxf.Blocks.Dynamic.IO
                 Code = buffer[Index].Code;
                 Value = buffer[Index].Value;
             }
+            else
+            {
+                Code = 0;
+                Value = "EOF";
+            }
         }
 
         public bool ReadBool()

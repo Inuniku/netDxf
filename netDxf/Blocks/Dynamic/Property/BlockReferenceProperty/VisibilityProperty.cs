@@ -18,7 +18,7 @@ namespace netDxf.Blocks.Dynamic.Property
         }
         new public string Value { get => (string)base.Value; set => base.Value = value; }
 
-        internal override object InternalValue { get => Parameter.VisibilityState; set => Parameter.VisibilityState = (string)value; }
+        internal override object InternalValue { get => Parameter.CurrentVisibilityState; set => Parameter.CurrentVisibilityState = (string)value; }
 
         public override UnitsType UnitsType => UnitsType.Distance;
 

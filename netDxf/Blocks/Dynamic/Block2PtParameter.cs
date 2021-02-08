@@ -211,6 +211,13 @@ namespace netDxf.Blocks.Dynamic
             UpdatedPoint2 = Point2 = DefinitionPoint2;
         }
 
+        internal override void InitializeRuntimeData()
+        {
+            base.InitializeRuntimeData();
+            UpdatedPoint1 = Point1 = DefinitionPoint1;
+            UpdatedPoint2 = Point2 = DefinitionPoint2;
+        }
+
         internal override void RuntimeDataIn(ICodeValueReader reader)
         {
             ReaderAdapter reader2 = new ReaderAdapter(reader);

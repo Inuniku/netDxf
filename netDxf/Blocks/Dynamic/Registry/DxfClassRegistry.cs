@@ -28,7 +28,7 @@ namespace netDxf.Blocks.Dynamic
             RegisterDXFInstance(DxfObjectCode.BlockVisibilityParameter, typeof(BlockVisibilityParameter));
             RegisterDXFInstance(DxfObjectCode.BlockFlipParameter, typeof(BlockFlipParameter));
             RegisterDXFInstance(DxfObjectCode.BlockLinearParameter, typeof(BlockLinearParameter));
-            RegisterDXFInstance(DxfObjectCode.BlockLookupParameter, typeof(BlockLookUpParameter));
+            RegisterDXFInstance(DxfObjectCode.BlockLookupParameter, typeof(BlockLookupParameter));
             RegisterDXFInstance(DxfObjectCode.BlockXYParameter, typeof(BlockXYParameter));
             RegisterDXFInstance(DxfObjectCode.BlockBasePointParameter, typeof(BlockBasepointParameter));
             RegisterDXFInstance(DxfObjectCode.BlockPointParameter, typeof(BlockPointParameter));
@@ -36,12 +36,13 @@ namespace netDxf.Blocks.Dynamic
             RegisterDXFInstance(DxfObjectCode.BlockVisibilityGrip, typeof(BlockVisibilityGrip));
             RegisterDXFInstance(DxfObjectCode.BlockFlipGrip, typeof(BlockFlipGrip));
             RegisterDXFInstance(DxfObjectCode.BlockLinearGrip, typeof(BlockLinearGrip));
-            RegisterDXFInstance(DxfObjectCode.BlockLookupGrip, typeof(BlockLookUpGrip));
+            RegisterDXFInstance(DxfObjectCode.BlockLookupGrip, typeof(BlockLookupGrip));
             RegisterDXFInstance(DxfObjectCode.BlockXYGrip, typeof(BlockXYGrip));
 
             RegisterDXFInstance(DxfObjectCode.BlockFlipAction, typeof(BlockFlipAction));
             RegisterDXFInstance(DxfObjectCode.BlockStretchAction, typeof(BlockStretchAction));
             RegisterDXFInstance(DxfObjectCode.BlockMoveAction, typeof(BlockMoveAction));
+            RegisterDXFInstance(DxfObjectCode.BlockLookupAction, typeof(BlockLookupAction));
 
             RegisterDXFInstance(DxfObjectCode.BlockRepresentationData, typeof(BlockRepresentationData));
             RegisterDXFInstance(DxfObjectCode.DynamicBlockPurgePreventer, typeof(DynamicBlockPurgePreventer));
